@@ -220,18 +220,12 @@ async def selftest(cfg: CatastroSettings, raw: bool = True) -> int:  # pragma: n
         p = cd.parse_dnp(body)
         show("DNPRC", isinstance(p, cd.Property), repr(p)[:300])
         if isinstance(p, cd.Property) and (url := card_url(cfg, p)):
-            try:
-                async with httpx.AsyncClient(
-                    timeout=cfg.timeout_seconds, headers={"User-Agent": cfg.user_agent}
-                ) as c:
-                    r = await c.get(url, follow_redirects=True)
-                show(
-                    "card_url",
-                    r.status_code == 200 and "catastr" in r.text.lower(),
-                    f"HTTP {r.status_code} {url}",
-                )
-            except httpx.HTTPError as e:
-                show("card_url", False, type(e).__name__)
+            # The Sede website (www1.sedecatastro.gob.es) rejects every non-browser client with
+            # HTTP 400 — even its home page and the map link returned by the API itself
+            # (checked 2026-11-05). So the link can only be checked by a person in a browser.
+            print(f"[SKIP] card_url: open in a browser and check it shows the property: {url}")
+            if p.map_url:
+                print(f"[SKIP] map_url:  open in a browser: {p.map_url}")
 
     lat, lon = SELFTEST_POINT
     body = await run("RCCOOR", client.rc_by_coords(lat, lon))
