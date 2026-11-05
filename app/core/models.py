@@ -60,3 +60,13 @@ class Lead(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, index=True
     )
+
+
+class CatastroCache(Base):
+    """Cached Catastro responses (by RC or other query key), TTL is applied on read."""
+
+    __tablename__ = "catastro_cache"
+
+    key: Mapped[str] = mapped_column(String(128), primary_key=True)  # e.g. "dnprc:<RC>"
+    payload: Mapped[dict[str, Any]] = mapped_column(JSON)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

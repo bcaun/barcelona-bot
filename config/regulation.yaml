@@ -9,9 +9,9 @@ texts:
   tourist_licence_barcelona:
     ru: "Туристическая аренда не допускается: новые туристические лицензии в Барселоне не выдаются, действующие планируется прекратить к ноябрю 2028 года."
     en: "Tourist rental is not an option: Barcelona issues no new tourist licences, and existing ones are planned to end by November 2028."
-  ite_check:   # Фаза 2
-    ru: ""
-    en: ""
+  ite_check:
+    ru: "Зданию {age} лет или больше — проверьте ITE / IEE (обязательное техническое обследование здания) и нет ли по нему предписаний о ремонте."
+    en: "The building is {age} years old or more — check the ITE / IEE (mandatory building technical inspection) and any repair orders."
 links:
   # Государственная система референсных цен аренды (SERPAVI). Сверить актуальность ссылки.
   rent_index: "https://serpavi.mivau.gob.es/"
