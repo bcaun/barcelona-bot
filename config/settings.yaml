@@ -35,3 +35,18 @@ calc:
   mortgage_share_options: [50, 60, 70, 80]
   price_min_eur: 10000          # защита от опечаток при вводе цены
   price_max_eur: 100000000
+
+catastro:
+  # Открытые сервисы «datos catastrales no protegidos» (Webservices_Libres.pdf, Catastro).
+  base_url: "https://ovc.catastro.meh.es/OVCServWeb/OVCWcfCallejero"
+  # Catastro отклоняет запросы без названия клиента — представляемся честно.
+  user_agent: "barcelona-bot/1.0 (+https://barcelona.ru)"
+  timeout_seconds: 10
+  retries: 2                  # повторы после первой неудачной попытки
+  retry_pause_seconds: 1.5
+  cache_days: 7               # кэш ответов по RC
+  default_province: "BARCELONA"
+  default_municipality: "BARCELONA"
+  # Карточка объекта в Sede Electrónica. Проверяется командой selftest (см. DEPLOY.md).
+  card_url_template: "https://www1.sedecatastro.gob.es/CYCBienInmueble/OVCConCiud.aspx?UrbRus=U&RefC={rc}&del={province_code}&mun={municipality_code}"
+  units_page_size: 8          # сколько квартир показывать на одной странице выбора

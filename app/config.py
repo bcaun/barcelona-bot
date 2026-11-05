@@ -77,6 +77,19 @@ class CalcSettings(BaseModel):
     price_max_eur: int = 100_000_000
 
 
+class CatastroSettings(BaseModel):
+    base_url: str = "https://ovc.catastro.meh.es/OVCServWeb/OVCWcfCallejero"
+    user_agent: str = "barcelona-bot/1.0"
+    timeout_seconds: float = 10
+    retries: int = 2
+    retry_pause_seconds: float = 1.5
+    cache_days: int = 7
+    default_province: str = "BARCELONA"
+    default_municipality: str = "BARCELONA"
+    card_url_template: str = ""
+    units_page_size: int = 8
+
+
 class Settings(BaseModel):
     timezone: str = "Europe/Madrid"
     channel: ChannelSettings
@@ -85,6 +98,7 @@ class Settings(BaseModel):
     legal: LegalSettings
     admin: AdminSettings = Field(default_factory=AdminSettings)
     calc: CalcSettings = Field(default_factory=CalcSettings)
+    catastro: CatastroSettings = Field(default_factory=CatastroSettings)
 
 
 def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:

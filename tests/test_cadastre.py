@@ -67,3 +67,39 @@ def test_regulation_flags():
     ]
     assert regulation_flags("Girona", 1981, **kw) == ["ite_check"]
     assert regulation_flags("Girona", None, **kw) == []
+
+
+# ---------------------------------------------------------------- parsing (real fixture)
+import json  # noqa: E402
+from decimal import Decimal  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+from app.core.cadastre import (  # noqa: E402
+    Property,
+    errors,
+    parse_dnp,
+    unwrap,
+)
+
+FIX = Path(__file__).parent / "fixtures" / "catastro"
+
+
+def _load(name):
+    return unwrap(json.loads((FIX / name).read_text(encoding="utf-8")))
+
+
+def test_parse_real_single_property():
+    p = parse_dnp(_load("dnprc_single.json"))
+    assert isinstance(p, Property)
+    assert p.rc == "2749704YJ0624N0001DI"
+    assert p.address == "CL GUAYANA-MOJONERA 3 46388 GODELLETA (VALENCIA)"
+    assert (p.use, p.area_m2, p.year_built, p.share_pct) == (
+        "Residencial",
+        94,
+        1976,
+        Decimal("100.000000"),
+    )
+    assert (p.municipality, p.province, p.kind) == ("GODELLETA", "VALENCIA", "UR")
+    assert p.map_url.startswith("https://www1.sedecatastro.gob.es/Cartografia/mapa.aspx")
+    assert Property.from_dict(p.to_dict()) == p
+    assert errors(_load("dnprc_single.json")) == []
