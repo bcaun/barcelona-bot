@@ -74,3 +74,13 @@ async def test_subscription_api_error_returns_false(bot, fake_session):
     fake_session.chat_member_factory = boom
     checker = SubscriptionChecker(bot, "@chan")
     assert await checker.is_subscribed(5) is False
+
+
+def test_local_yaml_overlay(tmp_path):
+    (tmp_path / "taxes.yaml").write_text(
+        "new_build:\n  iva_dwelling: 0.10\n  ajd: 0.015\nverified_at: x\n", encoding="utf-8"
+    )
+    (tmp_path / "taxes.local.yaml").write_text("new_build:\n  ajd: 0.02\n", encoding="utf-8")
+    data = load_yaml("taxes.yaml", tmp_path)
+    assert data["new_build"] == {"iva_dwelling": 0.10, "ajd": 0.02}
+    assert data["verified_at"] == "x"

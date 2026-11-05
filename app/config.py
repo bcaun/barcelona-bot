@@ -70,6 +70,11 @@ class AdminSettings(BaseModel):
 
 class CalcSettings(BaseModel):
     require_subscription: bool = False
+    municipality: str = "barcelona"
+    mortgage_share_default: int = 60
+    mortgage_share_options: list[int] = [50, 60, 70, 80]
+    price_min_eur: int = 10_000
+    price_max_eur: int = 100_000_000
 
 
 class Settings(BaseModel):
@@ -82,14 +87,66 @@ class Settings(BaseModel):
     calc: CalcSettings = Field(default_factory=CalcSettings)
 
 
-def load_yaml(name: str) -> dict[str, Any]:
-    with (CONFIG_DIR / name).open(encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
+def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    out = dict(base)
+    for k, v in override.items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = deep_merge(out[k], v)
+        else:
+            out[k] = v
+    return out
+
+
+def load_yaml(name: str, config_dir: Path | None = None) -> dict[str, Any]:
+    """Load config/<name> and overlay config/<name>.local.yaml (owner's values, not in git)."""
+    folder = config_dir or CONFIG_DIR
+    with (folder / name).open(encoding="utf-8") as f:
+        data = yaml.safe_load(f) or {}
+    local = folder / name.replace(".yaml", ".local.yaml")
+    if local.exists():
+        with local.open(encoding="utf-8") as f:
+            data = deep_merge(data, yaml.safe_load(f) or {})
+    return data
 
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings.model_validate(load_yaml("settings.yaml"))
+
+
+class LocalizedText(BaseModel):
+    ru: str = ""
+    en: str = ""
+
+    def get(self, lang: str) -> str:
+        return getattr(self, lang, "") or self.ru
+
+
+class Regulation(BaseModel):
+    verified_at: str = ""
+    stressed_market_municipalities: list[str] = []
+    texts: dict[str, LocalizedText] = {}
+    links: dict[str, str] = {}
+    ite_age_threshold_years: int = 45
+
+    def text(self, key: str, lang: str) -> str:
+        item = self.texts.get(key)
+        return item.get(lang) if item else ""
+
+    def is_stressed(self, municipality: str) -> bool:
+        return municipality.lower() in {m.lower() for m in self.stressed_market_municipalities}
+
+
+@lru_cache
+def get_regulation() -> Regulation:
+    return Regulation.model_validate(load_yaml("regulation.yaml"))
+
+
+@lru_cache
+def get_tax_config():  # noqa: ANN201 — returns app.core.calc.TaxConfig
+    from app.core.calc import TaxConfig
+
+    return TaxConfig.from_dict(load_yaml("taxes.yaml"))
 
 
 @lru_cache
