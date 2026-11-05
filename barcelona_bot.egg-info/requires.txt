@@ -1,0 +1,16 @@
+aiogram<4,>=3.13
+sqlalchemy[asyncio]<3,>=2.0
+aiosqlite>=0.20
+alembic>=1.13
+pydantic>=2.7
+pydantic-settings>=2.3
+pyyaml>=6.0
+httpx>=0.27
+fastapi>=0.115
+uvicorn>=0.30
+structlog>=24.1
+
+[dev]
+pytest>=8
+pytest-asyncio>=0.23
+ruff>=0.6

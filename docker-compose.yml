@@ -1,0 +1,45 @@
+# Фаза 0: работает только сервис bot.
+# Сервисы api и caddy (мини-апп, Фаза 3) включаются профилем: docker compose --profile webapp up -d
+services:
+  bot:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - bot_data:/data                 # база SQLite
+      - ./config:/srv/config:ro        # ставки и настройки: правка + restart, без пересборки
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  api:
+    build: .
+    profiles: [webapp]
+    restart: unless-stopped
+    env_file: .env
+    command: ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+    volumes:
+      - bot_data:/data
+      - ./config:/srv/config:ro
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  caddy:
+    image: caddy:2.8
+    profiles: [webapp]
+    restart: unless-stopped
+    depends_on: [api]
+    ports: ["80:80", "443:443"]
+    environment:
+      WEBAPP_DOMAIN: ${WEBAPP_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./webapp/dist:/srv/webapp:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  bot_data:
+  caddy_data:
+  caddy_config:
