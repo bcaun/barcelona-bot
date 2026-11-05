@@ -158,10 +158,13 @@ nano .env
 
 Сохранить: `Ctrl+O`, затем Enter. Выйти: `Ctrl+X`.
 
-### 5.2. Обычные настройки — `config/settings.yaml`
+### 5.2. Обычные настройки — `config/settings.local.yaml`
+
+Свои значения храним в отдельном файле `settings.local.yaml` — его не трогают обновления
+из git. Создайте его копией основного:
 
 ```bash
-nano config/settings.yaml
+cp config/settings.yaml config/settings.local.yaml && nano config/settings.local.yaml
 ```
 
 Заполните:
@@ -277,10 +280,17 @@ git pull && docker compose up -d --build
 ✅ `Container barcelona-bot-bot-1  Started`. Миграции базы данных применяются автоматически
 при запуске.
 
-## Изменить ставки или настройки (`config/*.yaml`)
+## Изменить ставки или настройки
 
-Отредактируйте файл (например, `nano config/taxes.yaml`) и перезапустите бота —
-пересборка не нужна:
+Свои значения пишите в `config/*.local.yaml` (например, `config/taxes.local.yaml`):
+достаточно указать только изменённые строки, с той же вложенностью, что в основном файле.
+Основные файлы (`taxes.yaml`, `settings.yaml`) не правьте — их обновляет `git pull`.
+
+```bash
+nano config/taxes.local.yaml
+```
+
+Затем перезапустите бота — пересборка не нужна:
 
 ```bash
 docker compose restart bot
