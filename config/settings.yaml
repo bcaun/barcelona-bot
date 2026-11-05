@@ -1,0 +1,32 @@
+# Не секретные настройки. Секреты (токен, ID чатов) — только в .env.
+# После правки этого файла перезапустите бота: docker compose restart bot
+
+timezone: "Europe/Madrid"   # для /stats («за сегодня» считается по этому часовому поясу)
+
+channel:
+  url: "https://t.me/barcelona_ru"   # ЗАПОЛНИТЬ: публичная ссылка на канал (кнопка «Наш канал»)
+  subscription_cache_seconds: 600    # кэш проверки подписки (ТЗ п.4.7 — 10 минут)
+
+i18n:
+  supported: [ru, en]
+  default: en                       # язык, если язык Telegram не поддерживается
+  # Языки Telegram, для которых по умолчанию показываем русский
+  ru_like: [ru, uk, be, kk, uz, ky, hy, az, ka]
+
+throttle:
+  max_events_per_second: 2          # не более N сообщений/нажатий в секунду от одного пользователя
+
+legal:
+  privacy_policy_url: "https://barcelona.ru/privacy"  # ЗАПОЛНИТЬ: страница политики конфиденциальности
+  # ЗАПОЛНИТЬ: реквизиты оператора персональных данных (юрлицо barcelona.ru)
+  controller:
+    name: ""          # полное наименование юрлица
+    tax_id: ""        # NIF/CIF
+    address: ""
+    email: ""         # e-mail для запросов по персональным данным
+
+admin:
+  language: ru      # язык карточек лидов и отчётов в админ-чате
+
+calc:
+  require_subscription: false   # Фаза 1: блоки «владение» и «аренда» только подписчикам

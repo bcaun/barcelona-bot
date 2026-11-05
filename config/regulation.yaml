@@ -1,0 +1,11 @@
+# Флаги регулирования (Фаза 2). Тексты заполняются в Фазе 2, владелец вычитывает.
+verified_at: "2026-11-05"
+stressed_market_municipalities:   # список муниципалитетов Каталонии; владелец дополняет
+  - barcelona
+texts:
+  stressed_market: { ru: "", en: "" }
+  tourist_licence_barcelona: { ru: "", en: "" }
+  ite_check: { ru: "", en: "" }
+links:
+  rent_index: ""   # url государственного индекса арендных цен — заполняется в Фазе 2
+ite_age_threshold_years: 45

@@ -1,0 +1,52 @@
+# Ставки и пороги для калькулятора (Фаза 1). Никаких ставок в коде — только здесь.
+# Значения проверены по открытым источникам; перед запуском владелец сверяет их с нормами
+# и обновляет verified_at при каждой сверке.
+verified_at: "2026-11-05"
+region: catalonia
+
+itp_resale:
+  # Прогрессивная шкала, считается по ступеням (как IRPF), база = max(цена, valor de referencia)
+  # Источник: DL 5/2025, в силе с 27.06.2025; guiafiscal.es/patrimonio/itp/cataluna (проверено 2026-11-05)
+  brackets:
+    - { up_to: 600000,  rate: 0.10 }
+    - { up_to: 900000,  rate: 0.11 }
+    - { up_to: 1500000, rate: 0.12 }
+    - { up_to: null,    rate: 0.13 }
+  reduced_habitual_residence:
+    # Источник: DL 5/2025, Каталония (проверено 2026-11-05)
+    rate: 0.05
+    # Любое из условий + доходный тест
+    conditions: [age_le_35, large_or_single_parent_family, disability_ge_65]
+    income_limit_irpf_base: 36000      # база IRPF минус личный и семейный минимум
+    income_limit_extra_per_child: 14000 # для многодетных/неполных, за каждого ребёнка сверх минимума
+  large_holder:
+    # Источник: DL 5/2025, Каталония (проверено 2026-11-05)
+    rate: 0.20
+    thresholds: { dwellings_gt: 10, built_m2_gt: 1500 }
+    note_key: large_holder_exclusions_not_modelled
+
+new_build:
+  # Источник: Ley 37/1992 del IVA, art. 91 (проверено 2026-11-05)
+  iva_dwelling: 0.10   # жильё (+ до 2 машиномест и кладовая в той же сделке)
+  # Источник: Каталония, общая ставка AJD (проверено 2026-11-05)
+  ajd: 0.015
+  # Льгота AJD для покупателей до 36 лет (основное жильё) — заявлена с 27.06.2025;
+  # включить после сверки с первоисточником
+  ajd_young_bonus_enabled: false
+
+purchase_fees:          # ориентиры по рынку, показываются диапазоном (проверено 2026-11-05)
+  notary:   { min_pct: 0.002, max_pct: 0.005, min_eur: 600 }
+  registry: { min_pct: 0.001, max_pct: 0.0025, min_eur: 300 }
+  gestoria: { min_eur: 300, max_eur: 600 }
+  tasacion: { min_eur: 300, max_eur: 600 }   # только при ипотеке
+  agency_buyer_pct: 0
+
+annual:
+  ibi_estimate_rate: { min: 0.005, max: 0.008 }  # от valor catastral; сверить с ordenanza fiscal Барселоны
+  irnr_imputed:
+    # Источник: Ley IRPF art. 85 / TRLIRNR art. 24 (проверено 2026-11-05)
+    # 2% — если ponencia de valores муниципалитета не пересматривалась с 2012; иначе 1.1%
+    coefficient_default: 0.02
+    coefficient_by_municipality: { barcelona: 0.02 }
+  # Источник: TRLIRNR art. 25 (проверено 2026-11-05)
+  irnr_rates: { eu_eea: 0.19, non_eu: 0.24 }
