@@ -1,0 +1,104 @@
+# Bot texts (English). Telegram HTML format: <b>, <i>, <a href="...">.
+start:
+  welcome: |-
+    Hello, {name}! 👋
+
+    I'm the bot of <b>barcelona.ru</b> — real estate in Barcelona for international buyers and investors.
+
+    How can I help?
+
+menu:
+  title: "Main menu. What are you interested in?"
+  calc: "🧮 Purchase cost calculator"
+  check: "🔎 Check a property"
+  game: "🎮 Game “Guess the price”"
+  channel: "📢 Our channel"
+  contact: "✉️ Contact us"
+  language: "🌐 Язык / Language"
+
+common:
+  soon_calc: "The calculator is coming soon 🙂"
+  soon_check: "Property check is coming soon 🙂"
+  soon_game: "The game is coming soon 🙂"
+  cancel: "✖️ Cancel"
+  cancelled: "Cancelled."
+  error: "Something went wrong. Please try again or press /start."
+  too_fast: "Too fast 🙂 Please wait a second."
+  admin_only: "This command is for administrators only."
+
+lang:
+  choose: "Выберите язык / Choose language:"
+  changed: "Language switched to English."
+
+contact:
+  consent_text: |-
+    For a manager to contact you, we need your consent to process personal data (name, Telegram username and, optionally, phone number).
+
+    See our <a href="{privacy_url}">privacy policy</a>. You can delete your data at any time with /delete_me.
+  consent_button: "✅ I agree to data processing"
+  ask_phone: |-
+    Thank you! How should we contact you?
+
+    Tap “📱 Share phone” — Telegram will send the number linked to your account. Or choose “Telegram only” and we'll message you directly.
+  send_phone_button: "📱 Share phone"
+  username_only_button: "💬 Telegram only, no phone"
+  need_username: "Your account has no username, so we can't message you first. Please share your phone using the button below."
+  not_your_contact: "Please share your own number using the “📱 Share phone” button."
+  use_buttons: "Please use the buttons below or tap “✖️ Cancel”."
+  thanks: "Request received ✅ A manager will contact you shortly."
+
+delete:
+  confirm_text: "Delete all your data (profile, activity history and requests)? This cannot be undone."
+  confirm_button: "🗑 Yes, delete"
+  done: "Your data has been deleted. If you want to come back, just press /start."
+
+help:
+  text: |-
+    /start — main menu
+    /language — change language
+    /delete_me — delete my data
+
+commands:
+  start: "Main menu"
+  language: "Change language"
+  delete_me: "Delete my data"
+
+admin:
+  lead_card: |-
+    🔔 <b>New request #{id}</b> — {lead_type}
+
+    👤 {name}
+    💬 {username}
+    📱 {phone}
+    🌐 Language: {language}
+    📍 Source: {source}
+    🆔 Telegram ID: <code>{user_id}</code>
+  lead_data_header: "📋 Data:"
+  no_value: "—"
+  lead_types:
+    contact: "Contact"
+    calc: "Calculator"
+    nota_simple: "Nota simple"
+    object_check: "Property check"
+    game: "Game"
+  deleted_notice: "🗑 User <code>{user_id}</code> deleted their data (/delete_me). Deleted requests: {lead_ids}. If these requests are stored elsewhere (CRM, spreadsheets), delete them manually."
+  stats: |-
+    📊 <b>Statistics</b>
+
+    <b>Users</b>
+    Today: {users_today}
+    Last 7 days: {users_week}
+    Total: {users_total}
+
+    <b>Requests</b>
+    Today: {leads_today}
+    Last 7 days: {leads_week}
+    Total: {leads_total}
+
+    <b>By type</b>
+    {by_type}
+
+    <b>By source</b>
+    {by_source}
+  csv_caption: "Requests: {count}"
+  csv_empty: "No requests yet."
