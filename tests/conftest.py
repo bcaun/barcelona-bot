@@ -15,6 +15,8 @@ from aiogram.types import Chat, ChatMemberLeft, Message
 from aiogram.types import User as TgUser
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+from app.bot.factory import build_dispatcher
+from app.bot.middlewares import ThrottlingMiddleware
 from app.config import Env, get_settings
 from app.core.db import Base, make_engine, make_session_factory
 
@@ -94,3 +96,14 @@ def bot(fake_session: FakeSession) -> Bot:
 @pytest.fixture
 def settings():
     return get_settings()
+
+
+@pytest.fixture
+def dp(bot, settings, env, session_factory):
+    d = build_dispatcher(bot, settings, env, session_factory)
+    for m in d.update.outer_middleware:  # disable throttling for scripted tests
+        if isinstance(m, ThrottlingMiddleware):
+            m.limit = 10_000
+    yield d
+    for r in d.sub_routers:  # module-level routers attach to one dispatcher at a time
+        r._parent_router = None

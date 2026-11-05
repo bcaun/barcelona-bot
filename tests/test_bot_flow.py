@@ -2,81 +2,13 @@
 
 from __future__ import annotations
 
-import itertools
-from datetime import UTC, datetime
-
-import pytest
 from aiogram.methods import DeleteMessage, SendDocument, SendMessage
-from aiogram.types import CallbackQuery, Chat, Contact, Message, Update
-from aiogram.types import User as TgUser
+from aiogram.types import Contact
 from sqlalchemy import func, select
 
-from app.bot.factory import build_dispatcher
-from app.bot.middlewares import ThrottlingMiddleware
 from app.core.models import Event, Lead, User
 from tests.conftest import ADMIN_CHAT, ADMIN_ID
-
-_ids = itertools.count(1)
-
-
-def tg_user(uid=7, lang="ru", username="ivan"):
-    return TgUser(
-        id=uid,
-        is_bot=False,
-        first_name="Иван",
-        last_name="П",
-        username=username,
-        language_code=lang,
-    )
-
-
-def msg_update(user, text=None, contact=None, chat_id=None):
-    return Update(
-        update_id=next(_ids),
-        message=Message(
-            message_id=next(_ids),
-            date=datetime.now(UTC),
-            chat=Chat(id=chat_id or user.id, type="private" if not chat_id else "supergroup"),
-            from_user=user,
-            text=text,
-            contact=contact,
-        ),
-    )
-
-
-def cb_update(user, data):
-    return Update(
-        update_id=next(_ids),
-        callback_query=CallbackQuery(
-            id=str(next(_ids)),
-            from_user=user,
-            chat_instance="ci",
-            data=data,
-            message=Message(
-                message_id=next(_ids),
-                date=datetime.now(UTC),
-                chat=Chat(id=user.id, type="private"),
-                text="x",
-            ),
-        ),
-    )
-
-
-@pytest.fixture
-def dp(bot, settings, env, session_factory):
-    d = build_dispatcher(bot, settings, env, session_factory)
-    # disable throttling for scripted tests
-    for m in d.update.outer_middleware:
-        if isinstance(m, ThrottlingMiddleware):
-            m.limit = 10_000
-    yield d
-    # module-level routers can be attached to one dispatcher at a time
-    for r in d.sub_routers:
-        r._parent_router = None
-
-
-async def feed(dp, bot, upd):
-    await dp.feed_update(bot, upd)
+from tests.helpers import cb_update, feed, msg_update, tg_user
 
 
 async def test_start_ru_and_en_with_source(dp, bot, fake_session, session_factory):

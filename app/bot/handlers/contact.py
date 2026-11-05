@@ -1,8 +1,13 @@
-"""«Contact us»: consent → phone (request_contact) or username only → lead `contact`."""
+"""Lead flow: consent → phone (request_contact) or username only → lead → admin card.
+
+Used by «Contact us» (lead `contact`) and by other features (e.g. calculator → lead `calc`)
+via start_lead_flow().
+"""
 
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 
 from aiogram import Bot, F, Router
 from aiogram.fsm.context import FSMContext
@@ -25,18 +30,34 @@ CANCEL_TEXTS = {t(x, "common.cancel") for x in ("ru", "en")}
 
 
 class ContactFlow(StatesGroup):
+    waiting_consent = State()
     waiting_contact = State()
 
 
+async def start_lead_flow(
+    message: Message,
+    state: FSMContext,
+    lang: str,
+    settings: Settings,
+    lead_type: str = "contact",
+    data: dict[str, Any] | None = None,
+) -> None:
+    """Ask for consent; the lead is created only after explicit consent (GDPR)."""
+    await state.clear()
+    await state.set_state(ContactFlow.waiting_consent)
+    await state.update_data(lead_type=lead_type, lead_data=data)
+    await message.answer(
+        t(lang, "contact.consent_text", privacy_url=settings.legal.privacy_policy_url),
+        reply_markup=kb.consent(lang),
+        disable_web_page_preview=True,
+    )
+
+
 @router.callback_query(F.data == kb.CB.CONTACT)
-async def cb_contact(cq: CallbackQuery, lang: str, settings: Settings) -> None:
+async def cb_contact(cq: CallbackQuery, lang: str, settings: Settings, state: FSMContext) -> None:
     await cq.answer()
     if isinstance(cq.message, Message):
-        await cq.message.answer(
-            t(lang, "contact.consent_text", privacy_url=settings.legal.privacy_policy_url),
-            reply_markup=kb.consent(lang),
-            disable_web_page_preview=True,
-        )
+        await start_lead_flow(cq.message, state, lang, settings, "contact")
 
 
 @router.callback_query(F.data == kb.CB.CONSENT)
@@ -64,16 +85,20 @@ async def _finish(
     data = await state.get_data()
     await state.clear()
     consent_at = datetime.fromisoformat(data["consent_at"]) if "consent_at" in data else utcnow()
+    lead_type = data.get("lead_type") or "contact"
     tg = message.from_user
     lead = await repo.create_lead(
         session,
         user,
-        "contact",
+        lead_type,
         name=tg.full_name if tg else None,
         phone=phone,
+        data=data.get("lead_data"),
         consent_at=consent_at,
     )
-    await repo.log_event(session, user.id, "lead:contact", {"lead_id": lead.id}, source=lead.source)
+    await repo.log_event(
+        session, user.id, f"lead:{lead_type}", {"lead_id": lead.id}, source=lead.source
+    )
     lead.admin_message_id = await send_lead_card(
         bot, env.admin_chat_id, lead, user, settings.admin.language
     )
@@ -151,3 +176,8 @@ async def cancel(message: Message, lang: str, settings: Settings, state: FSMCont
 @router.message(ContactFlow.waiting_contact)
 async def other(message: Message, lang: str) -> None:
     await message.answer(t(lang, "contact.use_buttons"), reply_markup=kb.contact_request(lang))
+
+
+@router.message(ContactFlow.waiting_consent)
+async def other_consent(message: Message, lang: str) -> None:
+    await message.answer(t(lang, "calc.err.use_buttons"))
