@@ -43,6 +43,10 @@ catastro:
   user_agent: "barcelona-bot/1.0 (+https://barcelona.ru)"
   timeout_seconds: 10
   retries: 2                  # повторы после первой неудачной попытки
+  # Список всех квартир дома (RC участка из 14 символов, поиск по адресу) Catastro отдаёт
+  # медленно: дом на 475 квартир — ~20 с (замерено 2026-11-05). Для таких запросов — дольше.
+  list_timeout_seconds: 30
+  list_retries: 1
   retry_pause_seconds: 1.5
   cache_days: 7               # кэш ответов по RC
   default_province: "BARCELONA"

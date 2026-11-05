@@ -90,7 +90,7 @@ async def test_coords_param_order():
     c = CatastroClient(CFG, transport([httpx.Response(200, json={"r": {"coordenadas": {}}})], seen))
     await c.rc_by_coords(41.4036, 2.1744)
     p = seen[0].url.params
-    assert (p["SRS"], p["Coordenada_X"], p["Coordenada_Y"]) == (
+    assert (p["SRS"], p["CoorX"], p["CoorY"]) == (
         "EPSG:4326",
         "2.174400",
         "41.403600",
@@ -113,3 +113,18 @@ async def test_service_cache(session_factory):
 
 def test_fixture_is_json():
     assert json.loads(SINGLE)
+
+
+async def test_list_queries_get_longer_timeout():
+    seen = []
+
+    def handler(request):
+        seen.append(request.extensions["timeout"]["read"])
+        return httpx.Response(200, text=SINGLE)
+
+    cfg = CFG.model_copy(update={"timeout_seconds": 10, "list_timeout_seconds": 30})
+    c = CatastroClient(cfg, httpx.MockTransport(handler))
+    await c.dnp_by_rc("2749704YJ0624N0001DI")
+    await c.dnp_by_rc("2749704YJ0624N")
+    await c.dnp_by_address("B", "B", "CL", "X", "1")
+    assert seen == [10, 30, 30]

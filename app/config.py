@@ -81,6 +81,8 @@ class CatastroSettings(BaseModel):
     base_url: str = "https://ovc.catastro.meh.es/OVCServWeb/OVCWcfCallejero"
     user_agent: str = "barcelona-bot/1.0"
     timeout_seconds: float = 10
+    list_timeout_seconds: float = 30
+    list_retries: int = 1
     retries: int = 2
     retry_pause_seconds: float = 1.5
     cache_days: int = 7

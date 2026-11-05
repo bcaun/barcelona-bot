@@ -4,6 +4,13 @@ Docs: https://www.catastro.hacienda.gob.es/ws/Webservices_Libres.pdf (not WCFser
 which describes the certificate-protected services). JSON endpoints under
 <base_url>/COVCCallejero.svc/json/... and <base_url>/COVCCoordenadas.svc/json/...
 
+Method and parameter names are taken from the services' own help pages
+(<service>.svc/json/help/operations/<op>, checked 2026-11-05), which differ from the PDF:
+  street directory  ObtenerCallejero?Provincia&Municipio&TipoVia&NomVia      (PDF: ConsultaVia)
+  by address        Consulta_DNPLOC?Provincia&Municipio&Sigla&Calle&Numero  (PDF: TipoVia, NomVia)
+  by coordinates    Consulta_RCCOOR?CoorX&CoorY&SRS                         (PDF: Coordenada_X/Y)
+  by RC             Consulta_DNPRC?Provincia&Municipio&RefCat
+
 Self-check on the server against the real service:
     docker compose exec bot python -m app.integrations.catastro
 """
@@ -27,7 +34,8 @@ from app.core.models import CatastroCache, utcnow
 log = structlog.get_logger(__name__)
 
 # Codes from Annex I meaning «nothing found / wrong input» (not a service failure)
-NOT_FOUND_CODES = {"3", "4", "5", "7", "9", "12", "16", "22", "33", "43"}
+# 10 is documented as a server error, but ObtenerCallejero returns it for «no matching streets».
+NOT_FOUND_CODES = {"3", "4", "5", "7", "9", "10", "12", "16", "22", "33", "43"}
 
 
 class CatastroUnavailable(Exception):
@@ -49,15 +57,21 @@ class CatastroClient:
         self.cfg = cfg
         self._transport = transport
 
-    async def _get(self, service: str, method: str, params: dict[str, Any]) -> dict[str, Any]:
+    async def _get(
+        self, service: str, method: str, params: dict[str, Any], *, may_list: bool = False
+    ) -> dict[str, Any]:
+        """may_list: the answer can be a list of all units of a building (hundreds of items,
+        ~20 s for 475 units) -> longer timeout and fewer retries (list_timeout_seconds)."""
         url = f"{self.cfg.base_url}/{service}.svc/json/{method}"
+        timeout = self.cfg.list_timeout_seconds if may_list else self.cfg.timeout_seconds
+        retries = min(self.cfg.retries, self.cfg.list_retries) if may_list else self.cfg.retries
         last: Exception | None = None
-        for attempt in range(self.cfg.retries + 1):
+        for attempt in range(retries + 1):
             if attempt:
                 await asyncio.sleep(self.cfg.retry_pause_seconds)
             try:
                 async with httpx.AsyncClient(
-                    timeout=self.cfg.timeout_seconds,
+                    timeout=timeout,
                     headers={"User-Agent": self.cfg.user_agent, "Accept": "application/json"},
                     transport=self._transport,
                 ) as client:
@@ -88,25 +102,27 @@ class CatastroClient:
         raise CatastroUnavailable(str(last) if last else "unknown")
 
     async def dnp_by_rc(self, rc: str) -> dict[str, Any]:
-        return await self._get("COVCCallejero", "Consulta_DNPRC", {"RefCat": rc})
+        return await self._get(
+            "COVCCallejero", "Consulta_DNPRC", {"RefCat": rc}, may_list=len(rc) == 14
+        )
 
     async def dnp_by_address(
         self, province: str, municipality: str, street_type: str, street: str, number: str
     ) -> dict[str, Any]:
         return await self._get("COVCCallejero", "Consulta_DNPLOC", {
-            "Provincia": province, "Municipio": municipality, "TipoVia": street_type,
-            "NomVia": street, "Numero": number,
-        })  # fmt: skip
+            "Provincia": province, "Municipio": municipality, "Sigla": street_type,
+            "Calle": street, "Numero": number,
+        }, may_list=True)  # fmt: skip
 
     async def streets(self, province: str, municipality: str, name: str) -> dict[str, Any]:
-        return await self._get("COVCCallejero", "ConsultaVia", {
+        return await self._get("COVCCallejero", "ObtenerCallejero", {
             "Provincia": province, "Municipio": municipality, "TipoVia": "", "NomVia": name,
         })  # fmt: skip
 
     async def rc_by_coords(self, lat: float, lon: float) -> dict[str, Any]:
         # EPSG:4326: X = longitude, Y = latitude (Webservices_Libres.pdf, 2.2.1)
         return await self._get("COVCCoordenadas", "Consulta_RCCOOR", {
-            "SRS": "EPSG:4326", "Coordenada_X": f"{lon:.6f}", "Coordenada_Y": f"{lat:.6f}",
+            "SRS": "EPSG:4326", "CoorX": f"{lon:.6f}", "CoorY": f"{lat:.6f}",
         })  # fmt: skip
 
 
@@ -174,7 +190,8 @@ def card_url(cfg: CatastroSettings, p: cd.Property) -> str | None:
 
 SELFTEST_RC = "2749704YJ0624N0001DI"  # example from Webservices_Libres.pdf
 SELFTEST_POINT = (41.4036, 2.1744)  # Barcelona, Sagrada Família block
-SELFTEST_ADDRESSES = [("MALLORCA", "CL", "401"), ("GRACIA", "PG", "43"), ("DIAGONAL", "AV", "640")]
+SELFTEST_ADDRESSES = [("MALLORCA", "CL", "406"), ("GRACIA", "PS", "43"), ("DIAGONAL", "AV", "641")]
+SELFTEST_PARCEL_WITH_UNITS = "6922624DF2862B"  # ~475 units (Av. Diagonal / C. Sabino Arana)
 
 
 async def selftest(cfg: CatastroSettings, raw: bool = True) -> int:  # pragma: no cover
@@ -228,17 +245,22 @@ async def selftest(cfg: CatastroSettings, raw: bool = True) -> int:  # pragma: n
                 n = len(res) if isinstance(res, list) else 1
                 show("DNPRC parcel", n > 0, f"{n} item(s): {repr(res)[:300]}", b2)
 
+    b4 = await run("DNPRC units", client.dnp_by_rc(SELFTEST_PARCEL_WITH_UNITS))
+    if b4 is not None:
+        res = cd.parse_dnp(b4)
+        ok = isinstance(res, list) and len(res) > 1 and all(u.rc for u in res)
+        show("DNPRC units", ok, f"{len(res) if isinstance(res, list) else 1} unit(s)")
+
     prov, mun = cfg.default_province, cfg.default_municipality
     for name, street_type, number in SELFTEST_ADDRESSES:
-        body = await run(f"ConsultaVia {name}", client.streets(prov, mun, name))
+        body = await run(f"ObtenerCallejero {name}", client.streets(prov, mun, name))
         if body is None:
             continue
         streets = cd.parse_streets(body)
-        show(f"ConsultaVia {name}", bool(streets), repr(streets[:5])[:300], body)
-        street = next(
-            (s for s in streets if s.type == street_type), streets[0] if streets else None
-        )
+        show(f"ObtenerCallejero {name}", bool(streets), repr(streets[:5])[:300], body)
+        street = next((s for s in streets if s.type == street_type and s.name == name), None)
         if street is None:
+            show(f"street {street_type} {name}", False, "not in the directory")
             continue
         b3 = await run(
             f"DNPLOC {street.label} {number}",
