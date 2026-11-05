@@ -103,3 +103,20 @@ def test_parse_real_single_property():
     assert p.map_url.startswith("https://www1.sedecatastro.gob.es/Cartografia/mapa.aspx")
     assert Property.from_dict(p.to_dict()) == p
     assert errors(_load("dnprc_single.json")) == []
+
+
+def test_filter_units():
+    from app.core.cadastre import filter_units
+
+    labels = [
+        "CL X 1 Pl 01 Pt 01 · 50 m²",
+        "CL X 1 Pl 01 Pt 02",
+        "CL X 1 Esc 2 Pl 03 Pt 1",
+        "CL X 1 Pl 00 Pt IN",
+    ]
+    assert filter_units(labels, "1 2") == [1]
+    assert filter_units(labels, "3 1") == [2]
+    assert filter_units(labels, "0 in") == [3]
+    assert filter_units(labels, "01") == [0, 1]
+    assert filter_units(labels, "3 1 2") == [2]
+    assert filter_units(labels, "") == []

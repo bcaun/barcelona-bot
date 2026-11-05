@@ -139,9 +139,13 @@ def rc_from(d: dict[str, Any] | None) -> str:
 
 
 def _int(v: Any) -> int | None:
+    """'94' -> 94, '2.259' -> 2259 (Catastro uses '.' as thousands separator in lists)."""
+    s = str(v).strip() if v is not None else ""
+    if re.fullmatch(r"\d{1,3}(?:\.\d{3})+", s):
+        s = s.replace(".", "")
     try:
-        return int(str(v).strip())
-    except (TypeError, ValueError):
+        return int(s)
+    except ValueError:
         return None
 
 
@@ -176,6 +180,34 @@ def unit_label(dt: dict[str, Any] | None) -> str:
 class PropertyRef:
     rc: str
     label: str
+    use: str = ""
+    area_m2: int | None = None
+
+    @property
+    def button_text(self) -> str:
+        area = f" · {self.area_m2} m²" if self.area_m2 else ""
+        return f"{self.label}{area}"
+
+
+def _norm_token(tok: str) -> str:
+    tok = tok.strip().upper()
+    return tok.lstrip("0") or "0" if tok.isdigit() else tok
+
+
+def filter_units(labels: list[str], query: str) -> list[int]:
+    """Indexes of labels matching '<floor> [<door> [<stair>]]', e.g. '1 2' -> floor 1, door 2.
+
+    Compared to the label's 'Pl'/'Pt'/'Esc' parts with leading zeros ignored."""
+    tokens = [_norm_token(t) for t in re.split(r"[\s,.;/-]+", query) if t.strip()]
+    if not tokens:
+        return []
+    keys = ("Pl", "Pt", "Esc")[: len(tokens)]
+    out = []
+    for i, label in enumerate(labels):
+        parts = {k: _norm_token(v) for k, v in re.findall(r"\b(Bl|Esc|Pl|Pt) (\S+)", label)}
+        if all(parts.get(k) == tok for k, tok in zip(keys, tokens, strict=False)):
+            out.append(i)
+    return out
 
 
 @dataclass(frozen=True)
@@ -233,7 +265,13 @@ def parse_dnp(body: dict[str, Any]) -> Property | list[PropertyRef]:
         )
     lrc = body.get("lrcdnp")
     items = as_list(lrc.get("rcdnp") if isinstance(lrc, dict) else lrc)
-    return [PropertyRef(rc_from(i.get("rc")), unit_label(i.get("dt"))) for i in items if i]
+    return [
+        PropertyRef(
+            rc_from(i.get("rc")), unit_label(i.get("dt")),
+            str((i.get("debi") or {}).get("luso", "")), _int((i.get("debi") or {}).get("sfc")),
+        )
+        for i in items if i
+    ]  # fmt: skip
 
 
 @dataclass(frozen=True)
