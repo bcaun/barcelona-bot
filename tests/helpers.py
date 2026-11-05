@@ -22,7 +22,7 @@ def tg_user(uid=7, lang="ru", username="ivan"):
     )
 
 
-def msg_update(user, text=None, contact=None, chat_id=None):
+def msg_update(user, text=None, contact=None, chat_id=None, location=None):
     return Update(
         update_id=next(_ids),
         message=Message(
@@ -32,6 +32,7 @@ def msg_update(user, text=None, contact=None, chat_id=None):
             from_user=user,
             text=text,
             contact=contact,
+            location=location,
         ),
     )
 

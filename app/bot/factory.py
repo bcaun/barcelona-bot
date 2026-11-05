@@ -10,10 +10,11 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand, BotCommandScopeDefault, ErrorEvent, Message
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.bot.handlers import admin, calc, contact, privacy, start
+from app.bot.handlers import admin, calc, check, contact, privacy, start
 from app.bot.middlewares import DbSessionMiddleware, ThrottlingMiddleware, UserMiddleware
 from app.config import Env, Settings
 from app.i18n import t
+from app.integrations.catastro import CatastroClient, CatastroService
 from app.integrations.telegram_channel import SubscriptionChecker
 
 log = structlog.get_logger(__name__)
@@ -25,6 +26,7 @@ def build_dispatcher(
     dp = Dispatcher(storage=MemoryStorage())
     dp["settings"] = settings
     dp["env"] = env
+    dp["catastro"] = CatastroService(CatastroClient(settings.catastro), settings.catastro)
     dp["subscriptions"] = SubscriptionChecker(
         bot, env.channel_id, settings.channel.subscription_cache_seconds
     )
@@ -33,7 +35,9 @@ def build_dispatcher(
     dp.update.outer_middleware(DbSessionMiddleware(session_factory))
     dp.update.outer_middleware(UserMiddleware(settings))
 
-    dp.include_routers(admin.router, privacy.router, contact.router, calc.router, start.router)
+    dp.include_routers(
+        admin.router, privacy.router, contact.router, calc.router, check.router, start.router
+    )
 
     @dp.errors()
     async def on_error(event: ErrorEvent) -> bool:
@@ -62,7 +66,7 @@ async def set_commands(bot: Bot, settings: Settings) -> None:
     for lang in settings.i18n.supported:
         cmds = [
             BotCommand(command=c, description=t(lang, f"commands.{c}"))
-            for c in ("start", "calc", "language", "delete_me")
+            for c in ("start", "calc", "check", "language", "delete_me")
         ]
         code = None if lang == settings.i18n.default else lang
         await bot.set_my_commands(cmds, scope=BotCommandScopeDefault(), language_code=code)

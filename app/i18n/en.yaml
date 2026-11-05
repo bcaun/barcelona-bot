@@ -17,7 +17,7 @@ menu:
   language: "🌐 Язык / Language"
 
 common:
-  soon_check: "Property check is coming soon 🙂"
+
   soon_game: "The game is coming soon 🙂"
   cancel: "✖️ Cancel"
   cancelled: "Cancelled."
@@ -55,10 +55,12 @@ help:
   text: |-
     /start — main menu
     /calc — purchase cost calculator
+    /check — check a property in the cadastre
     /language — change language
     /delete_me — delete my data
 
 commands:
+  check: "Check a property"
   calc: "Purchase cost calculator"
   start: "Main menu"
   language: "Change language"
@@ -210,3 +212,65 @@ calc:
       itp_reduced: "ITP, 5% relief"
       itp_large_holder: "ITP, large holder"
       new_build: "IVA + AJD"
+
+check:
+  choose: "🔎 <b>Property check</b>\nI'll show data from Spain's open cadastre and key restrictions. How do you want to search?"
+  by_rc: "🔢 By cadastral reference (RC)"
+  by_address: "🏠 By address"
+  by_location: "📍 By location"
+  back: "⬅️ Back"
+  ask_rc: "Send the cadastral reference (<i>referencia catastral</i>) — 20 characters, e.g. <code>9872023VH5797S0001WX</code>. 14 characters (the plot) also work — I'll list the properties on it."
+  ask_street: "Municipality: <b>{municipality}</b>.\nType the street name, e.g. <code>Mallorca</code> or <code>Diagonal</code>."
+  change_municipality: "🏙 Another municipality"
+  ask_municipality: "Type the municipality name, e.g. <code>Badalona</code>."
+  pick_street: "Choose the street:"
+  ask_number: "<b>{street}</b>. Building number?"
+  ask_location: "Tap “📍 Send location” below or attach a location via 📎 → “Location” — you can pick a point on the map."
+  send_location: "📍 Send location"
+  searching: "Searching the cadastre…"
+  pick_unit: "There are several properties in this building ({count}). Choose one:"
+  filter_hint: "Or type the floor and door separated by a space, e.g. <code>2 1</code>, to narrow the list."
+  prev: "◀️"
+  next: "▶️"
+  card:
+    title: "🔎 <b>Property per the cadastre</b>"
+    rc: "RC: <code>{v}</code>"
+    address: "Address: {v}"
+    use: "Use: {v}"
+    area: "Built area: {v} m²"
+    year: "Year built: {v}"
+    share: "Share in common elements: {v}"
+    links: "🔗 <a href=\"{card}\">Record in the Sede Electrónica del Catastro</a>"
+    map: "🗺 <a href=\"{map}\">Property on the cadastral map</a>"
+    flags_title: "<b>Things to note</b>"
+    rent_index: "Rent price index: {url}"
+    note: "<i>Open Catastro data. It does not include the cadastral value — that is on the IBI bill.</i>"
+  btn:
+    nota: "📄 Order a nota simple through us"
+    calc: "🧮 Calculate purchase costs"
+    consult: "📩 I want a consultation on this property"
+  use:
+    residencial: "residential (Residencial)"
+    comercial: "retail (Comercial)"
+    oficinas: "office (Oficinas)"
+    industrial: "industrial (Industrial)"
+    almacen-estacionamiento: "storage / parking (Almacén-Estacionamiento)"
+  err:
+    rc_format: "That doesn't look like a cadastral reference. It should be 20 characters (or 14 for the plot), e.g. <code>9872023VH5797S0001WX</code>."
+    rc_control: "The control letters at the end don't match — please check for a typo."
+    not_found: "Nothing was found in the cadastre for this. Please check and try again."
+    street_not_found: "I couldn't find this street in {municipality}. Try another spelling — without “Carrer de”, e.g. <code>Mallorca</code>."
+    number_not_found: "There is no such number on this street."
+    nearby: "Existing numbers: {numbers}. Type one of them."
+    number_format: "Type the building number in digits, e.g. <code>43</code>."
+    location_empty: "The cadastre found nothing at this point. Try placing the point right on the building."
+    unavailable: "The cadastre service is currently unavailable, please try again later."
+    expired: "This check has expired. Open “🔎 Check a property” in the menu again."
+    filter_empty: "No such floor and door in this building. Try again, e.g. <code>1 2</code>."
+    use_buttons: "Please use the buttons above."
+  lead:
+    rc: "RC"
+    address: "Address"
+    use: "Use"
+    area: "Area, m²"
+    year: "Year built"

@@ -64,10 +64,9 @@ async def cb_menu(cq: CallbackQuery, lang: str, settings: Settings) -> None:
         await send_menu(cq.message, lang, settings)
 
 
-@router.callback_query(F.data.in_({kb.CB.CHECK, kb.CB.GAME}))
+@router.callback_query(F.data == kb.CB.GAME)
 async def cb_soon(cq: CallbackQuery, lang: str) -> None:
-    key = "common.soon_check" if cq.data == kb.CB.CHECK else "common.soon_game"
-    await cq.answer(t(lang, key), show_alert=True)
+    await cq.answer(t(lang, "common.soon_game"), show_alert=True)
 
 
 @router.message(Command("language"))

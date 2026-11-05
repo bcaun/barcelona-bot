@@ -280,6 +280,18 @@ git pull && docker compose up -d --build
 ✅ `Container barcelona-bot-bot-1  Started`. Миграции базы данных применяются автоматически
 при запуске.
 
+## Проверить связь с кадастром (Catastro)
+
+Команда делает реальные запросы к Catastro (номер из документации, геоточка и три адреса
+в Барселоне) и печатает результат:
+
+```bash
+docker compose exec bot python -m app.integrations.catastro --quiet
+```
+
+✅ Все строки начинаются с `[OK]`, в конце `FAILED: 0`. Если есть `[FAIL] ... unavailable` —
+кадастр не отвечает серверу; без `--quiet` команда покажет и сырые ответы.
+
 ## Изменить ставки или настройки
 
 Свои значения пишите в `config/*.local.yaml` (например, `config/taxes.local.yaml`):
