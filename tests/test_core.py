@@ -89,3 +89,13 @@ async def test_user_leads_stats_csv_and_delete(session_factory):
     async with session_factory() as s:
         st = await repo.get_stats(s, "Europe/Madrid")
         assert (st.users_total, st.leads_total) == (1, 1)
+
+
+def test_format_range_and_pct():
+    from app.core.money import format_eur_range, format_pct
+
+    assert format_eur_range(Decimal(1600), Decimal(4000)) == "1 600–4 000 €"
+    assert format_eur_range(Decimal(300), Decimal("300.2")) == "300 €"
+    assert format_pct(Decimal("0.015")) == "1,5%"
+    assert format_pct(Decimal("0.10"), "en") == "10%"
+    assert format_pct(Decimal("0.04321"), "ru", 1) == "4,3%"

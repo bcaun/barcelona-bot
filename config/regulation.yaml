@@ -1,11 +1,18 @@
-# Флаги регулирования (Фаза 2). Тексты заполняются в Фазе 2, владелец вычитывает.
+# Флаги регулирования. Тексты нейтральные, без юридических гарантий — владелец вычитывает.
 verified_at: "2026-11-05"
 stressed_market_municipalities:   # список муниципалитетов Каталонии; владелец дополняет
   - barcelona
 texts:
-  stressed_market: { ru: "", en: "" }
-  tourist_licence_barcelona: { ru: "", en: "" }
-  ite_check: { ru: "", en: "" }
+  stressed_market:
+    ru: "Барселона относится к зоне напряжённого рынка жилья: арендная плата по новым договорам ограничена индексом референсных цен."
+    en: "Barcelona is a stressed residential market area: rent under new contracts is capped by the reference price index."
+  tourist_licence_barcelona:
+    ru: "Туристическая аренда не допускается: новые туристические лицензии в Барселоне не выдаются, действующие планируется прекратить к ноябрю 2028 года."
+    en: "Tourist rental is not an option: Barcelona issues no new tourist licences, and existing ones are planned to end by November 2028."
+  ite_check:   # Фаза 2
+    ru: ""
+    en: ""
 links:
-  rent_index: ""   # url государственного индекса арендных цен — заполняется в Фазе 2
+  # Государственная система референсных цен аренды (SERPAVI). Сверить актуальность ссылки.
+  rent_index: "https://serpavi.mivau.gob.es/"
 ite_age_threshold_years: 45
