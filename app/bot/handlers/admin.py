@@ -54,6 +54,9 @@ async def cmd_stats(message: Message, session: AsyncSession, settings: Settings)
             leads_total=s.leads_total,
             by_type=_lines(s.leads_by_type, lang, "admin.lead_types"),
             by_source=_lines(s.leads_by_source, lang),
+            checks_week=s.checks_week,
+            calcs_week=s.calcs_week,
+            check_flags=_lines(s.check_flags_week, lang, "check.flag"),
         )
     )
 

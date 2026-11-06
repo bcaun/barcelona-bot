@@ -105,6 +105,9 @@ class Stats:
     leads_total: int
     leads_by_type: dict[str, int] = field(default_factory=dict)
     leads_by_source: dict[str, int] = field(default_factory=dict)
+    checks_week: int = 0
+    calcs_week: int = 0
+    check_flags_week: dict[str, int] = field(default_factory=dict)
 
 
 def period_starts(now: datetime, tz: str) -> tuple[datetime, datetime]:
@@ -131,7 +134,23 @@ async def get_stats(session: AsyncSession, tz: str, now: datetime | None = None)
         await session.execute(select(Lead.source, func.count()).group_by(Lead.source))
     ).all()
     by_source = {(s or "—"): n for s, n in by_source_rows}
+
+    async def events_since(event_type: str) -> list[dict]:
+        rows = await session.scalars(
+            select(Event.payload).where(Event.event_type == event_type, Event.created_at >= week)
+        )
+        return [r or {} for r in rows.all()]
+
+    checks = await events_since("check:done")
+    flags: dict[str, int] = {}
+    for payload in checks:
+        for f in payload.get("flags") or []:
+            flags[f] = flags.get(f, 0) + 1
+
     return Stats(
+        checks_week=len(checks),
+        calcs_week=len(await events_since("calc:done")),
+        check_flags_week=flags,
         users_today=await count(User, day),
         users_week=await count(User, week),
         users_total=await count(User),

@@ -85,6 +85,7 @@ async def test_stats_and_csv_admin_only(dp, bot, fake_session):
     await feed(dp, bot, msg_update(admin, "/stats"))
     stats = fake_session.sent()[-1].text
     assert "Статистика" in stats and "Связаться: 1" in stats
+    assert "Проверок объектов: 0" in stats and "Расчётов в калькуляторе: 0" in stats
     # works from the admin group chat too
     await feed(dp, bot, msg_update(admin, "/leads_csv", chat_id=ADMIN_CHAT))
     await feed(dp, bot, msg_update(admin, "/chatid", chat_id=ADMIN_CHAT))

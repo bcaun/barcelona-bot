@@ -52,6 +52,8 @@ CB_MUNICIPALITY = P + "mun"
 CB_NOTA = P + "nota"
 CB_CONSULT = P + "consult"
 CB_CALC = P + "calc"
+CB_DETAILS = P + "details"
+CB_SKIP_AREA = P + "area:skip"
 MAX_STREETS = 10
 CANCEL_TEXTS = {t(x, "common.cancel") for x in ("ru", "en")}
 
@@ -63,6 +65,7 @@ class CheckFlow(StatesGroup):
     number = State()
     location = State()
     pick = State()  # choosing street / unit by buttons
+    area = State()  # optional: area stated in the listing
 
 
 def _btn(text: str, data: str) -> InlineKeyboardButton:
@@ -125,7 +128,7 @@ def render_card(p: cd.Property, lang: str, catastro_cfg: CatastroSettings, reg: 
     flags = cd.regulation_flags(
         municipality, p.year_built,
         stressed={m.lower() for m in reg.stressed_market_municipalities},
-        tourist_ban={"barcelona"} if reg.text("tourist_licence_barcelona", lang) else set(),
+        tourist_ban={m.lower() for m in reg.tourist_ban_municipalities},
         ite_age_years=reg.ite_age_threshold_years,
     )  # fmt: skip
     if flags:
@@ -140,12 +143,33 @@ def render_card(p: cd.Property, lang: str, catastro_cfg: CatastroSettings, reg: 
     return "\n".join(lines)
 
 
-def _card_markup(lang: str) -> InlineKeyboardMarkup:
+def render_verdict(p: cd.Property, items: list[cd.CheckItem], lang: str, reg: Regulation) -> str:
+    """Short «traffic light» summary — the main answer to «is there a catch?»."""
+    e = html.escape
+    address = p.address.split(" 0")[0] if p.address else p.rc  # drop postcode/municipality tail
+    lines = [t(lang, "check.verdict_title", address=e(address), rc=e(p.rc)), ""]
+    for item in items:
+        params = {k: e(str(v)) for k, v in item.params.items()}
+        if item.key == "use_not_residential":
+            params["use"] = e(_use_label(str(item.params["use"]), lang))
+        lines.append(t(lang, f"check.v.{item.key}", **params))
+        explain = {"use_not_residential": "non_residential_use", "area_bigger": "area_bigger"}
+        if item.key in explain and (txt := reg.text(explain[item.key], lang)):
+            lines.append(f"<i>{e(txt)}</i>")
+    if txt := reg.text("open_data_limits", lang):
+        lines += ["", t(lang, "check.limits_title"), e(txt)]
+    return "\n".join(lines)
+
+
+def _card_markup(lang: str, settings: Settings) -> InlineKeyboardMarkup:
+    price = settings.nota_simple.price_eur
+    nota = t(lang, "check.btn.nota_price", price=price) if price else t(lang, "check.btn.nota")
     return InlineKeyboardMarkup(inline_keyboard=[
-        [_btn(t(lang, "check.btn.nota"), CB_NOTA)],
+        [_btn(nota, CB_NOTA)],
         [_btn(t(lang, "check.btn.calc"), CB_CALC)],
+        [_btn(t(lang, "check.btn.details"), CB_DETAILS)],
         [_btn(t(lang, "check.btn.consult"), CB_CONSULT)],
-        [_btn(t(lang, "check.back"), P + "m:again")],
+        [_btn(t(lang, "check.btn.again"), P + "m:again")],
     ])  # fmt: skip
 
 
@@ -201,18 +225,46 @@ async def _show(
                 text, reply_markup=_units_markup(units, 0, settings.catastro.units_page_size, lang)
             )
             return
-    await state.set_state(None)
-    await state.update_data(property=res.to_dict())
-    await repo.log_event(
-        session,
-        user.id,
-        "check:done",
-        {"method": method, "property": res.to_dict()},
-        source=user.last_source or user.source,
-    )
+    await state.set_state(CheckFlow.area)
+    await state.update_data(property=res.to_dict(), method=method, listing_area=None)
+    address = res.address.split(" 0")[0] if res.address else res.rc
     await target.answer(
-        render_card(res, lang, catastro.cfg, get_regulation()),
-        reply_markup=_card_markup(lang),
+        t(lang, "check.ask_area", address=html.escape(address)),
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[[_btn(t(lang, "check.skip_area"), CB_SKIP_AREA)], _nav(lang)]
+        ),
+    )
+
+
+async def _finish_check(
+    target: Message,
+    listing_area: int | None,
+    *,
+    state: FSMContext,
+    lang: str,
+    settings: Settings,
+    session: AsyncSession,
+    user: User,
+) -> None:
+    data = await state.get_data()
+    if not data.get("property"):
+        await target.answer(t(lang, "check.err.expired"))
+        return
+    p = cd.Property.from_dict(data["property"])
+    reg = get_regulation()
+    items = cd.checklist(p, listing_area, reg.check_rules())
+    flags = cd.flag_summary(items)
+    await state.set_state(None)
+    await state.update_data(listing_area=listing_area, flags=flags)
+    await repo.log_event(
+        session, user.id, "check:done",
+        {"method": data.get("method"), "property": p.to_dict(), "listing_area": listing_area,
+         "flags": flags},
+        source=user.last_source or user.source,
+    )  # fmt: skip
+    await target.answer(
+        render_verdict(p, items, lang, reg),
+        reply_markup=_card_markup(lang, settings),
         disable_web_page_preview=True,
     )
 
@@ -236,32 +288,45 @@ async def _safe(target: Message, lang: str, coro, nearby: bool = False):  # noqa
     return None
 
 
+async def _last_check(state: FSMContext, session: AsyncSession, user: User) -> dict[str, Any]:
+    """Finished check from FSM (normal case) or from the last check:done event (after restart)."""
+    data = await state.get_data()
+    if data.get("property") and "flags" in data:
+        return {"property": data["property"], "listing_area": data.get("listing_area"),
+                "flags": data.get("flags", [])}  # fmt: skip
+    ev = await session.scalar(
+        select(Event)
+        .where(Event.user_id == user.id, Event.event_type == "check:done")
+        .order_by(Event.id.desc())
+        .limit(1)
+    )
+    return dict(ev.payload or {}) if ev else {}
+
+
 async def _last_property(
     state: FSMContext, session: AsyncSession, user: User
 ) -> cd.Property | None:
-    d = (await state.get_data()).get("property")
-    if d is None:
-        ev = await session.scalar(
-            select(Event)
-            .where(Event.user_id == user.id, Event.event_type == "check:done")
-            .order_by(Event.id.desc())
-            .limit(1)
-        )
-        d = (ev.payload or {}).get("property") if ev else None
+    d = (await _last_check(state, session, user)).get("property")
     try:
         return cd.Property.from_dict(d) if d else None
     except (TypeError, ValueError):
         return None
 
 
-def lead_data(p: cd.Property, lang: str) -> dict[str, Any]:
+def lead_data(
+    p: cd.Property, lang: str, listing_area: int | None = None, flags: list[str] | None = None
+) -> dict[str, Any]:
     d: dict[str, Any] = {t(lang, "check.lead.rc"): p.rc, t(lang, "check.lead.address"): p.address}
     if p.use:
         d[t(lang, "check.lead.use")] = p.use
     if p.area_m2:
         d[t(lang, "check.lead.area")] = p.area_m2
+    if listing_area:
+        d[t(lang, "check.lead.listing_area")] = listing_area
     if p.year_built:
         d[t(lang, "check.lead.year")] = p.year_built
+    if flags:
+        d[t(lang, "check.lead.flags")] = ", ".join(t(lang, f"check.flag.{f}") for f in flags)
     return d
 
 
@@ -601,6 +666,59 @@ async def pick_other(message: Message, lang: str) -> None:
 # ---------------------------------------------------------------- card actions
 
 
+@router.message(CheckFlow.area, F.text & ~F.text.startswith("/"))
+async def got_area(
+    message: Message,
+    state: FSMContext,
+    lang: str,
+    settings: Settings,
+    session: AsyncSession,
+    user: User,
+) -> None:
+    area = cd.parse_area(message.text or "")
+    if area is None:
+        await message.answer(t(lang, "check.err_area"))
+        return
+    await _finish_check(message, area, state=state, lang=lang, settings=settings,
+                        session=session, user=user)  # fmt: skip
+
+
+@router.callback_query(CheckFlow.area, F.data == CB_SKIP_AREA)
+async def cb_skip_area(
+    cq: CallbackQuery,
+    state: FSMContext,
+    lang: str,
+    settings: Settings,
+    session: AsyncSession,
+    user: User,
+) -> None:
+    await cq.answer()
+    if isinstance(cq.message, Message):
+        await cq.message.edit_reply_markup(reply_markup=None)
+        await _finish_check(cq.message, None, state=state, lang=lang, settings=settings,
+                            session=session, user=user)  # fmt: skip
+
+
+@router.callback_query(F.data == CB_DETAILS)
+async def cb_details(
+    cq: CallbackQuery,
+    state: FSMContext,
+    lang: str,
+    session: AsyncSession,
+    user: User,
+    catastro: CatastroService,
+) -> None:
+    p = await _last_property(state, session, user)
+    if p is None:
+        await cq.answer(t(lang, "check.err.expired"), show_alert=True)
+        return
+    await cq.answer()
+    if isinstance(cq.message, Message):
+        await cq.message.answer(
+            render_card(p, lang, catastro.cfg, get_regulation()), disable_web_page_preview=True
+        )
+
+
 @router.callback_query(F.data.in_({CB_NOTA, CB_CONSULT}))
 async def cb_lead(
     cq: CallbackQuery,
@@ -610,23 +728,27 @@ async def cb_lead(
     session: AsyncSession,
     user: User,
 ) -> None:
+    check = await _last_check(state, session, user)
     p = await _last_property(state, session, user)
     if p is None:
         await cq.answer(t(lang, "check.err.expired"), show_alert=True)
         return
     await cq.answer()
     lead_type = "nota_simple" if cq.data == CB_NOTA else "object_check"
+    admin_lang = settings.admin.language
+    data = lead_data(p, admin_lang, check.get("listing_area"), check.get("flags"))
+    if lead_type == "nota_simple" and settings.nota_simple.price_eur:
+        data[t(admin_lang, "check.lead.price")] = f"{settings.nota_simple.price_eur} €"
     if isinstance(cq.message, Message):
-        await start_lead_flow(
-            cq.message, state, lang, settings, lead_type, lead_data(p, settings.admin.language)
-        )
+        await start_lead_flow(cq.message, state, lang, settings, lead_type, data)
 
 
 @router.callback_query(F.data == CB_CALC)
 async def cb_calc(cq: CallbackQuery, state: FSMContext, lang: str, settings: Settings) -> None:
+    """Calculator with «resale» pre-selected: the user only types the price."""
     await cq.answer()
     if isinstance(cq.message, Message):
-        await start_calc(cq.message, state, lang, settings)
+        await start_calc(cq.message, state, lang, settings, prefill={"type": "resale"})
 
 
 @router.callback_query(F.data.startswith(P))

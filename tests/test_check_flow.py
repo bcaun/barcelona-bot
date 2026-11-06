@@ -114,14 +114,23 @@ async def test_by_rc_card_with_flags(make_dlg):
     assert "кадастровый номер" in await d.cb("k:m:rc")
     assert "Контрольные буквы" in await d.say("6922624DF2862B0005QB")
     assert "не похоже" in await d.say("hello")
-    card = await d.say(UNIT)
-    assert f"RC: <code>{UNIT}</code>" in card
-    assert "CL SABINO ARANA 32(B) Pl:01 Pt:01" in card and "531 м²" in card and "1969" in card
-    assert "2,07%" in card and "торговое (Comercial)" in card
+    ask = await d.say(UNIT)
+    assert "Объект найден: <b>CL SABINO ARANA 32(B) Pl:01 Pt:01</b>" in ask
+    assert "Напишите площадь" in await d.say("abc")
+    verdict = await d.say("600 м2")  # listing claims more than the cadastre's 531 m²
+    assert f"RC <code>{UNIT}</code>" in verdict
+    assert "❌ По кадастру это не жильё: торговое (Comercial)" in verdict
+    assert "cédula de habitabilidad" in verdict
+    assert "⚠️ Площадь: в объявлении 600 м², в кадастре 531 м² (+13%)" in verdict
+    assert "⚠️ Здание 1969 года" in verdict
+    assert "❌ Туристическая аренда невозможна" in verdict and "⚠️ Аренда ограничена" in verdict
+    assert "не показывают собственника, ипотеки" in verdict
+    assert d.buttons() == ["k:nota", "k:calc", "k:details", "k:consult", "k:m:again"]
+    assert "25 €" in d.last().reply_markup.inline_keyboard[0][0].text
+    card = await d.cb("k:details")
+    assert f"RC: <code>{UNIT}</code>" in card and "531 м²" in card and "2,07%" in card
     assert f"https://sede/?RefC={UNIT}" in card and "mapa.aspx" in card
-    assert "напряжённого рынка" in card and "туристические лицензии" in card
-    assert "ITE / IEE" in card and "45 лет" in card
-    assert d.buttons()[:3] == ["k:nota", "k:calc", "k:consult"]
+    assert "напряжённого рынка" in card and "ITE / IEE" in card
 
 
 async def test_parcel_rc_lists_units_filter_and_pick(make_dlg):
@@ -134,7 +143,8 @@ async def test_parcel_rc_lists_units_filter_and_pick(make_dlg):
     assert "объектов (1)" in await d.say("1 2")  # floor 01, door 02
     assert "Pl 01 Pt 02" in d.last().reply_markup.inline_keyboard[0][0].text
     assert "нет" in await d.say("9 9")
-    assert "RC: <code>6922624DF2862B" in await d.cb("k:u:0")
+    assert "Объект найден" in await d.cb("k:u:0")
+    assert "RC <code>6922624DF2862B" in await d.cb("k:area:skip")
 
 
 async def test_unit_pagination(make_dlg, settings):
@@ -161,7 +171,8 @@ async def test_by_address_full_path(make_dlg):
     assert seen[-1].url.params["NomVia"] == "Mallorca"
     assert "CL MALLORCA" in await d.cb("k:s:2")
     assert "Есть номера: 406" in await d.say("401")
-    card = await d.say("406")
+    await d.say("406")
+    card = await d.cb("k:area:skip")
     loc = [r for r in seen if r.url.path.endswith("Consulta_DNPLOC")][-1].url.params
     assert (loc["Provincia"], loc["Municipio"], loc["Sigla"], loc["Calle"], loc["Numero"]) == (
         "BARCELONA",
@@ -170,7 +181,8 @@ async def test_by_address_full_path(make_dlg):
         "MALLORCA",
         "406",
     )
-    assert "CL MALLORCA 406" in card and "115 м²" in card and "1987" in card
+    assert "CL MALLORCA 406" in card and "ℹ️ Площадь по кадастру: 115 м²" in card
+    assert "Здание 1987 года" in card
 
 
 async def test_change_municipality(make_dlg):
@@ -191,7 +203,7 @@ async def test_by_location(make_dlg):
     await d.cb("k:m:geo")
     assert "геоточку" in d.last().text
     await d.say(location=Location(latitude=41.4036, longitude=2.1744))
-    assert "CL MARINA 253" in d.last().text  # parcel without division -> card directly
+    assert "CL MARINA 253" in d.last().text  # parcel without division -> straight to the unit
     p = [r for r in seen if "RCCOOR" in r.url.path][0].url.params
     assert (p["CoorX"], p["CoorY"], p["SRS"]) == ("2.174400", "41.403600", "EPSG:4326")
 
@@ -217,6 +229,7 @@ async def test_nota_simple_lead_reaches_admin(make_dlg, session_factory):
     await d.cb("menu:check")
     await d.cb("k:m:rc")
     await d.say(UNIT)
+    await d.say("600")
     assert "согласие" in await d.cb("k:nota")
     await d.cb("contact:consent")
     await d.say("💬 Только Telegram, без телефона")
@@ -225,6 +238,8 @@ async def test_nota_simple_lead_reaches_admin(make_dlg, session_factory):
     async with session_factory() as s:
         lead = (await s.scalars(select(Lead))).one()
         assert lead.lead_type == "nota_simple" and lead.data["RC"] == UNIT
+        assert lead.data["Площадь в объявлении, м²"] == 600 and lead.data["Цена услуги"] == "25 €"
+        assert "не жильё" in lead.data["Флаги"] and "площадь завышена" in lead.data["Флаги"]
 
 
 async def test_object_check_lead_and_calc_button(make_dlg):
@@ -232,7 +247,9 @@ async def test_object_check_lead_and_calc_button(make_dlg):
     await d.cb("menu:check")
     await d.cb("k:m:rc")
     await d.say("2749704YJ0624N0001DI")
-    assert "Какой объект" in await d.cb("k:calc")
+    await d.cb("k:area:skip")
+    assert "Цена покупки" in await d.cb("k:calc")  # «resale» pre-selected
+    assert "Какой объект" in await d.cb("c:back")
     assert "согласие" in await d.cb("k:consult")  # works from DB event after FSM reset
 
 
@@ -240,5 +257,21 @@ async def test_english_card(make_dlg):
     d, _ = make_dlg(uid=71, lang="en")
     await d.cb("menu:check")
     await d.cb("k:m:rc")
-    card = await d.say(UNIT)
-    assert "Built area: 531 m²" in card and "stressed residential market" in card
+    await d.say(UNIT)
+    card = await d.cb("k:area:skip")
+    assert "Per the cadastre this is not a dwelling" in card and "Pre-purchase check" in card
+    assert "Built area: 531 m²" in await d.cb("k:details")
+
+
+async def test_stats_show_checks_and_flags(make_dlg, bot, fake_session):
+    from tests.conftest import ADMIN_ID
+
+    d, _ = make_dlg()
+    await d.cb("menu:check")
+    await d.cb("k:m:rc")
+    await d.say(UNIT)
+    await d.say("600")
+    admin = Dialog(d.dp, bot, fake_session, tg_user(ADMIN_ID, "ru", "boss"))
+    stats = await admin.say("/stats")
+    assert "Проверок объектов: 1" in stats
+    assert "не жильё: 1" in stats and "площадь завышена: 1" in stats

@@ -230,12 +230,28 @@ async def _ask(
 
 
 async def start_calc(
-    message: Message, state: FSMContext, lang: str, settings: Settings, edit: bool = False
+    message: Message,
+    state: FSMContext,
+    lang: str,
+    settings: Settings,
+    edit: bool = False,
+    prefill: dict[str, Any] | None = None,
 ) -> None:
+    """prefill: answers already known (e.g. {"type": "resale"} from a property check);
+    the dialog starts at the first unanswered step, «Back» still reaches the prefilled ones."""
     await state.clear()
     await state.set_state(CalcFlow.active)
-    await state.update_data(answers={}, history=["type"])
-    await _ask(message, "type", {}, lang, settings, edit)
+    answers = dict(prefill or {})
+    history = ["type"]
+    step: str | None = "type"
+    while step in answers:
+        step = next_step(step, answers)
+        if step is None:
+            break
+        history.append(step)
+    step = step or "type"
+    await state.update_data(answers=answers, history=history)
+    await _ask(message, step, answers, lang, settings, edit)
 
 
 def _parse_choice(step: str, raw: str) -> Any:
