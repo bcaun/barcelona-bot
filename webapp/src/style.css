@@ -1,7 +1,7 @@
 /* Colors come from Telegram theme params (CSS variables set by telegram-web-app.js),
    with fallbacks for light/dark when opened outside Telegram. */
 :root {
-  --brand: #c8102e; /* barcelona.ru accent */
+  --brand: #d7444a; /* barcelona.ru logo red (design kit: brand-red) */
   --bg: var(--tg-theme-bg-color, #ffffff);
   --text: var(--tg-theme-text-color, #16181d);
   --hint: var(--tg-theme-hint-color, #6b7280);
