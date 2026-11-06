@@ -77,6 +77,11 @@ class CalcSettings(BaseModel):
     price_max_eur: int = 100_000_000
 
 
+class NotaSimpleSettings(BaseModel):
+    price_eur: int = 25
+    official_fee_eur: str = "9,02 € + IVA"
+
+
 class CatastroSettings(BaseModel):
     base_url: str = "https://ovc.catastro.meh.es/OVCServWeb/OVCWcfCallejero"
     user_agent: str = "barcelona-bot/1.0"
@@ -101,6 +106,7 @@ class Settings(BaseModel):
     admin: AdminSettings = Field(default_factory=AdminSettings)
     calc: CalcSettings = Field(default_factory=CalcSettings)
     catastro: CatastroSettings = Field(default_factory=CatastroSettings)
+    nota_simple: NotaSimpleSettings = Field(default_factory=NotaSimpleSettings)
 
 
 def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -144,6 +150,22 @@ class Regulation(BaseModel):
     texts: dict[str, LocalizedText] = {}
     links: dict[str, str] = {}
     ite_age_threshold_years: int = 45
+    tourist_ban_municipalities: list[str] = ["barcelona"]
+    residential_uses: list[str] = ["residencial"]
+    area_mismatch_warn_pct: float = 10
+
+    def check_rules(self):  # noqa: ANN201 — app.core.cadastre.CheckRules
+        from decimal import Decimal
+
+        from app.core.cadastre import CheckRules
+
+        return CheckRules(
+            residential_uses=frozenset(u.lower() for u in self.residential_uses),
+            area_warn_pct=Decimal(str(self.area_mismatch_warn_pct)) / 100,
+            ite_age_years=self.ite_age_threshold_years,
+            stressed=frozenset(m.lower() for m in self.stressed_market_municipalities),
+            tourist_ban=frozenset(m.lower() for m in self.tourist_ban_municipalities),
+        )
 
     def text(self, key: str, lang: str) -> str:
         item = self.texts.get(key)

@@ -36,6 +36,13 @@ calc:
   price_min_eur: 10000          # защита от опечаток при вводе цены
   price_max_eur: 100000000
 
+nota_simple:
+  # Цена услуги «заказать nota simple через нас» для клиента, €. 0 — бесплатно (цена не показывается).
+  price_eur: 25
+  # Официальный тариф реестра (registradores.org, онлайн): 9,02 € + IVA ≈ 10,91 €.
+  # Источник: Minjusticia, consulta pública RD arancel registral, 21.07.2026 (проверено 2026-11-06).
+  official_fee_eur: "9,02 € + IVA"
+
 catastro:
   # Открытые сервисы «datos catastrales no protegidos» (Webservices_Libres.pdf, Catastro).
   base_url: "https://ovc.catastro.meh.es/OVCServWeb/OVCWcfCallejero"

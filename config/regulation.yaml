@@ -12,7 +12,23 @@ texts:
   ite_check:
     ru: "Зданию {age} лет или больше — проверьте ITE / IEE (обязательное техническое обследование здания) и нет ли по нему предписаний о ремонте."
     en: "The building is {age} years old or more — check the ITE / IEE (mandatory building technical inspection) and any repair orders."
+  non_residential_use:
+    ru: "Под видом квартиры иногда продают коммерческое помещение или офис. Проверьте, есть ли cédula de habitabilidad и возможна ли смена назначения на жильё — от этого зависят ипотека, прописка и законность проживания."
+    en: "Commercial premises or offices are sometimes sold as flats. Check whether there is a cédula de habitabilidad and whether a change of use to residential is possible — this affects mortgages, registration and legal residence."
+  area_bigger:
+    ru: "Часто в объявлении указывают площадь с долей общих зон или террасами. Уточните, за какие метры вы платите."
+    en: "Listings often include a share of common areas or terraces. Check which square metres you are paying for."
+  open_data_limits:
+    ru: "Открытые данные кадастра не показывают собственника, ипотеки, аресты, долги и другие обременения. Это есть только в nota simple из Реестра собственности."
+    en: "Open cadastre data does not show the owner, mortgages, seizures, debts or other encumbrances. Only the nota simple from the Land Registry shows them."
 links:
   # Государственная система референсных цен аренды (SERPAVI). Сверить актуальность ссылки.
   rent_index: "https://serpavi.mivau.gob.es/"
 ite_age_threshold_years: 45
+# Муниципалитеты, где новые туристические лицензии не выдаются (флаг в проверке объекта)
+tourist_ban_municipalities:
+  - barcelona
+
+# «Светофор» проверки объекта
+residential_uses: [residencial]   # значения поля «uso» Catastro, которые считаем жильём
+area_mismatch_warn_pct: 10        # площадь в объявлении больше кадастровой более чем на N% → ⚠️

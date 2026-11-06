@@ -10,7 +10,7 @@ start:
 menu:
   title: "Main menu. What are you interested in?"
   calc: "🧮 Purchase cost calculator"
-  check: "🔎 Check a property"
+  check: "🔎 Check a flat before buying"
   game: "🎮 Game “Guess the price”"
   channel: "📢 Our channel"
   contact: "✉️ Contact us"
@@ -103,6 +103,12 @@ admin:
 
     <b>By source</b>
     {by_source}
+
+    <b>Tools, last 7 days</b>
+    Property checks: {checks_week}
+    Calculator runs: {calcs_week}
+    Found in checks:
+    {check_flags}
   csv_caption: "Requests: {count}"
   csv_empty: "No requests yet."
 
@@ -232,6 +238,22 @@ check:
   filter_hint: "Or type the floor and door separated by a space, e.g. <code>2 1</code>, to narrow the list."
   prev: "◀️"
   next: "▶️"
+  ask_area: "Property found: <b>{address}</b>\n\nWhat area is stated in the listing, m²? I'll compare it with the cadastre — a common reason for overpaying.\n\nType a number, e.g. <code>85</code>, or tap “Skip”."
+  skip_area: "⏭ Skip"
+  err_area: "Type the area as a number, e.g. <code>85</code>, or tap “Skip”."
+  verdict_title: "🔎 <b>Pre-purchase check</b>\n{address}\nRC <code>{rc}</code>"
+  limits_title: "<b>What open data doesn't show</b>"
+  v:
+    use_ok: "✅ Use per the cadastre: residential"
+    use_not_residential: "❌ Per the cadastre this is not a dwelling: {use}"
+    area_bigger: "⚠️ Area: listing {listing} m², cadastre {cadastre} m² (+{diff}%)"
+    area_smaller: "ℹ️ Area: listing {listing} m², cadastre {cadastre} m² ({diff}%)"
+    area_match: "✅ Area matches the cadastre: {cadastre} m²"
+    area_cadastre: "ℹ️ Area per the cadastre: {cadastre} m²"
+    ite_needed: "⚠️ Built in {year} ({age}+ years) — check the ITE / IEE and any repair orders"
+    ite_not_yet: "✅ Built in {year} — no mandatory age-based ITE yet"
+    tourist_banned: "❌ Tourist rental is not possible — no new licences"
+    rent_capped: "⚠️ Rent is capped by the reference price index"
   card:
     title: "🔎 <b>Property per the cadastre</b>"
     rc: "RC: <code>{v}</code>"
@@ -246,8 +268,11 @@ check:
     rent_index: "Rent price index: {url}"
     note: "<i>Open Catastro data. It does not include the cadastral value — that is on the IBI bill.</i>"
   btn:
-    nota: "📄 Order a nota simple through us"
-    calc: "🧮 Calculate purchase costs"
+    nota: "📄 Legal check — nota simple"
+    nota_price: "📄 Legal check — nota simple, {price} €"
+    calc: "🧮 What the purchase will cost"
+    details: "📋 More: cadastre data"
+    again: "🔁 Check another property"
     consult: "📩 I want a consultation on this property"
   use:
     residencial: "residential (Residencial)"
@@ -274,3 +299,12 @@ check:
     use: "Use"
     area: "Area, m²"
     year: "Year built"
+    listing_area: "Listing area, m²"
+    flags: "Flags"
+    price: "Service price"
+  flag:
+    use_not_residential: "not a dwelling"
+    area_bigger: "area overstated"
+    ite_needed: "ITE needed"
+    tourist_banned: "no tourist licences"
+    rent_capped: "rent capped"
