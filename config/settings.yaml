@@ -39,6 +39,9 @@ calc:
 nota_simple:
   # Цена услуги «заказать nota simple через нас» для клиента, €. 0 — бесплатно (цена не показывается).
   price_eur: 29
+  currency: EUR
+  # Онлайн-оплата через Stripe внутри Telegram включается токеном PAYMENT_PROVIDER_TOKEN в .env
+  # (см. DEPLOY.md → «Подключить оплату Stripe»). Без токена — обычная заявка, счёт выставляет менеджер.
   # Официальный тариф реестра (registradores.org, онлайн): 9,02 € + IVA ≈ 10,91 €.
   # Источник: Minjusticia, consulta pública RD arancel registral, 21.07.2026 (проверено 2026-11-06).
   official_fee_eur: "9,02 € + IVA"

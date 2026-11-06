@@ -308,3 +308,20 @@ check:
     ite_needed: "ITE needed"
     tourist_banned: "no tourist licences"
     rent_capped: "rent capped"
+
+pay:
+  offer: |-
+    📄 <b>Nota simple — {price} €</b>
+    Land Registry extract for <b>{address}</b>: who the owner is, and whether there is a mortgage, seizures or other encumbrances.
+
+    We'll order it from the registry and send it here in Telegram within one business day (usually sooner). Stripe will email you the receipt.
+
+    By paying you agree to the processing of your data to fulfil the order — <a href="{privacy_url}">privacy policy</a>.
+  title: "Nota simple"
+  description: "Land Registry extract: {address} (RC {rc})"
+  outdated: "The price has changed or the invoice is out of date. Tap “Nota simple” again."
+  thanks: "✅ Payment received — {amount}. Order number: #{lead_id}.\nWe'll order the nota simple for {rc} and send it here within one business day."
+  lead:
+    paid: "Payment"
+    email: "Receipt e-mail"
+    charge: "Stripe charge"

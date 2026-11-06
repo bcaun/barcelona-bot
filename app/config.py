@@ -26,6 +26,17 @@ class Env(BaseSettings):
     database_url: str = f"sqlite+aiosqlite:///{ROOT_DIR / 'data' / 'bot.db'}"
     log_level: str = "INFO"
     webapp_domain: str = ""
+    # Telegram Payments provider token (Stripe), from @BotFather → Payments. Empty = no online pay.
+    payment_provider_token: SecretStr | None = None
+
+    @field_validator("payment_provider_token", mode="before")
+    @classmethod
+    def _empty_token_to_none(cls, v: Any) -> Any:
+        return None if v in ("", None) else v
+
+    @property
+    def payments_enabled(self) -> bool:
+        return self.payment_provider_token is not None
 
     @field_validator("admin_chat_id", mode="before")
     @classmethod
@@ -79,6 +90,7 @@ class CalcSettings(BaseModel):
 
 class NotaSimpleSettings(BaseModel):
     price_eur: int = 29
+    currency: str = "EUR"
     official_fee_eur: str = "9,02 € + IVA"
 
 

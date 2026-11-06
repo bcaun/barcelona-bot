@@ -79,6 +79,8 @@ def describe_event(update: Update) -> tuple[str, dict[str, Any] | None] | None:
             return "message:location", None
         if m.document:
             return "message:document", None
+        if m.successful_payment:
+            return "message:payment", None
         return "message", None
     if update.callback_query:
         cq: CallbackQuery = update.callback_query
