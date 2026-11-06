@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.models import Event, Lead, User, utcnow
+from app.core.models import Event, Lead, QuizSession, User, utcnow
 
 _SOURCE_RE = re.compile(r"[^A-Za-z0-9_\-]")
 
@@ -91,6 +91,7 @@ async def delete_user_data(session: AsyncSession, user_id: int) -> list[Lead]:
     leads = list((await session.scalars(select(Lead).where(Lead.user_id == user_id))).all())
     await session.execute(delete(Lead).where(Lead.user_id == user_id))
     await session.execute(delete(Event).where(Event.user_id == user_id))
+    await session.execute(delete(QuizSession).where(QuizSession.user_id == user_id))
     await session.execute(delete(User).where(User.id == user_id))
     return leads
 
@@ -107,6 +108,8 @@ class Stats:
     leads_by_source: dict[str, int] = field(default_factory=dict)
     checks_week: int = 0
     calcs_week: int = 0
+    games_week: int = 0
+    wins_week: int = 0
     check_flags_week: dict[str, int] = field(default_factory=dict)
 
 
@@ -150,6 +153,8 @@ async def get_stats(session: AsyncSession, tz: str, now: datetime | None = None)
     return Stats(
         checks_week=len(checks),
         calcs_week=len(await events_since("calc:done")),
+        games_week=len(games := await events_since("game:finish")),
+        wins_week=sum(1 for g in games if g.get("won")),
         check_flags_week=flags,
         users_today=await count(User, day),
         users_week=await count(User, week),

@@ -7,6 +7,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     KeyboardButton,
     ReplyKeyboardMarkup,
+    WebAppInfo,
 )
 
 from app.i18n import t
@@ -25,7 +26,14 @@ class CB:
     SET_LANG = "lang:"  # + code
 
 
-def main_menu(lang: str, channel_url: str) -> InlineKeyboardMarkup:
+def game_button(lang: str, webapp_url: str) -> InlineKeyboardButton:
+    """Opens the quiz Mini App; without a configured domain — «coming soon» callback."""
+    if webapp_url:
+        return InlineKeyboardButton(text=t(lang, "menu.game"), web_app=WebAppInfo(url=webapp_url))
+    return InlineKeyboardButton(text=t(lang, "menu.game"), callback_data=CB.GAME)
+
+
+def main_menu(lang: str, channel_url: str, webapp_url: str = "") -> InlineKeyboardMarkup:
     def b(key: str, cb: str) -> list[InlineKeyboardButton]:
         return [InlineKeyboardButton(text=t(lang, key), callback_data=cb)]
 
@@ -33,7 +41,7 @@ def main_menu(lang: str, channel_url: str) -> InlineKeyboardMarkup:
         inline_keyboard=[
             b("menu.calc", CB.CALC),
             b("menu.check", CB.CHECK),
-            b("menu.game", CB.GAME),
+            [game_button(lang, webapp_url)],
             [InlineKeyboardButton(text=t(lang, "menu.channel"), url=channel_url)],
             b("menu.contact", CB.CONTACT),
             b("menu.language", CB.LANGUAGE),

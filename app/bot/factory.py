@@ -10,7 +10,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand, BotCommandScopeDefault, ErrorEvent, Message
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.bot.handlers import admin, calc, check, contact, payments, privacy, start
+from app.bot.handlers import admin, calc, check, contact, payments, privacy, quiz, start
 from app.bot.middlewares import DbSessionMiddleware, ThrottlingMiddleware, UserMiddleware
 from app.config import Env, Settings
 from app.i18n import t
@@ -27,6 +27,8 @@ def build_dispatcher(
     dp["settings"] = settings
     dp["env"] = env
     dp["catastro"] = CatastroService(CatastroClient(settings.catastro), settings.catastro)
+    if env.webapp_domain and not settings.quiz.webapp_url:
+        settings.quiz.webapp_url = f"https://{env.webapp_domain.strip().strip('/')}/"
     dp["subscriptions"] = SubscriptionChecker(
         bot, env.channel_id, settings.channel.subscription_cache_seconds
     )
@@ -37,6 +39,7 @@ def build_dispatcher(
 
     dp.include_routers(
         payments.router,
+        quiz.router,
         admin.router,
         privacy.router,
         contact.router,
@@ -72,7 +75,7 @@ async def set_commands(bot: Bot, settings: Settings) -> None:
     for lang in settings.i18n.supported:
         cmds = [
             BotCommand(command=c, description=t(lang, f"commands.{c}"))
-            for c in ("start", "calc", "check", "language", "delete_me")
+            for c in ("start", "calc", "check", "game", "language", "delete_me")
         ]
         code = None if lang == settings.i18n.default else lang
         await bot.set_my_commands(cmds, scope=BotCommandScopeDefault(), language_code=code)

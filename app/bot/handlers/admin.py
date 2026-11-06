@@ -56,6 +56,8 @@ async def cmd_stats(message: Message, session: AsyncSession, settings: Settings)
             by_source=_lines(s.leads_by_source, lang),
             checks_week=s.checks_week,
             calcs_week=s.calcs_week,
+            games_week=s.games_week,
+            wins_week=s.wins_week,
             check_flags=_lines(s.check_flags_week, lang, "check.flag"),
         )
     )

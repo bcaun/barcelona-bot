@@ -8,6 +8,7 @@ import structlog
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.types import MenuButtonWebApp, WebAppInfo
 
 from app.bot.factory import build_dispatcher, set_commands
 from app.config import get_env, get_settings
@@ -36,6 +37,9 @@ async def main() -> None:
     )
     try:
         await set_commands(bot, settings)
+        if settings.quiz.webapp_url:  # «🎮 Квиз» button next to the message input
+            await bot.set_chat_menu_button(menu_button=MenuButtonWebApp(
+                text="🎮 Квиз", web_app=WebAppInfo(url=settings.quiz.webapp_url)))  # fmt: skip
     except Exception as e:  # noqa: BLE001
         log.warning("set_commands_failed", error=type(e).__name__)
     try:

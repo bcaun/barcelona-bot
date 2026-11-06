@@ -96,6 +96,7 @@ class QuizSettings(BaseModel):
     leaderboard_size: int = 50
     max_answers_per_hour: int = 60
     app_short_name: str = "quiz"  # Mini App short name from @BotFather /newapp
+    webapp_url: str = ""  # set at startup from WEBAPP_DOMAIN in .env (https://<domain>/)
 
 
 class NotaSimpleSettings(BaseModel):

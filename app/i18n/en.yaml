@@ -11,7 +11,7 @@ menu:
   title: "Main menu. What are you interested in?"
   calc: "🧮 Purchase cost calculator"
   check: "🔎 Check a flat before buying"
-  game: "🎮 Game “Guess the price”"
+  game: "🎮 Quiz: do you know Barcelona housing?"
   channel: "📢 Our channel"
   contact: "✉️ Contact us"
   language: "🌐 Язык / Language"
@@ -60,6 +60,7 @@ help:
     /delete_me — delete my data
 
 commands:
+  game: "Barcelona housing quiz"
   check: "Check a property"
   calc: "Purchase cost calculator"
   start: "Main menu"
@@ -83,7 +84,7 @@ admin:
     calc: "Calculator"
     nota_simple: "Nota simple"
     object_check: "Property check"
-    game: "Game"
+    game: "Quiz (prize)"
   deleted_notice: "🗑 User <code>{user_id}</code> deleted their data (/delete_me). Deleted requests: {lead_ids}. If these requests are stored elsewhere (CRM, spreadsheets), delete them manually."
   stats: |-
     📊 <b>Statistics</b>
@@ -107,6 +108,7 @@ admin:
     <b>Tools, last 7 days</b>
     Property checks: {checks_week}
     Calculator runs: {calcs_week}
+    Quiz games: {games_week}, finished with a win: {wins_week}
     Found in checks:
     {check_flags}
   csv_caption: "Requests: {count}"
@@ -337,3 +339,14 @@ pay:
     email: "Receipt e-mail"
     charge: "Stripe charge"
     reference: "Stripe client reference"
+
+quiz:
+  invite: "🎮 <b>Quiz “Do you know housing in Barcelona?”</b>\n25 questions, 3 lives. Get to the end and win a free nota simple for any flat."
+  prize_not_won: "The prize goes to those who finish the quiz. Give it a try — one attempt per day."
+  prize_already: "You've already claimed your prize 🎁 A manager will contact you in Telegram."
+  prize_subscribe: "🎉 You've won a free nota simple! The prize is for subscribers of our channel — subscribe and tap “I've subscribed”."
+  prize_congrats: "🎉 Congratulations! Your prize is a free nota simple for any flat in Spain. Leave your contact — a manager will ask for the address or cadastral reference."
+  lead:
+    prize: "Prize"
+    prize_value: "Free nota simple (quiz)"
+    result: "Quiz result"

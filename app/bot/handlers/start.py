@@ -21,7 +21,8 @@ router = Router(name="start")
 
 async def send_menu(message: Message, lang: str, settings: Settings) -> None:
     await message.answer(
-        t(lang, "menu.title"), reply_markup=kb.main_menu(lang, settings.channel.url)
+        t(lang, "menu.title"),
+        reply_markup=kb.main_menu(lang, settings.channel.url, settings.quiz.webapp_url),
     )
 
 
