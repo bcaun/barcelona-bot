@@ -1,0 +1,93 @@
+const ru = {
+  title: "Знаешь ли ты жильё в Барселоне?",
+  intro: "{total} вопросов о покупке, аренде, налогах и жизни с жильём в Барселоне. У вас {lives} жизни — каждая ошибка отнимает одну.",
+  prize: "🎁 Пройдите до конца — получите <b>бесплатную nota simple</b> на любую квартиру.",
+  rules_attempts: "Одна попытка в день.",
+  start: "Начать игру",
+  resume: "Продолжить игру",
+  best: "Ваш лучший результат: {score} из {total}",
+  no_attempts: "Сегодня вы уже сыграли. Новая попытка — завтра.",
+  leaderboard: "🏆 Рейтинг недели",
+  channel: "📢 Наш канал",
+  question: "Вопрос {n} из {total}",
+  next: "Дальше",
+  finish: "Результат",
+  correct: "Верно!",
+  wrong: "Неверно",
+  tool_calc: "🧮 Посчитать в боте",
+  tool_check: "🔎 Проверить квартиру в боте",
+  won_title: "🏆 Вы прошли все {total} вопросов!",
+  won_text: "Ваш приз — <b>бесплатная nota simple</b> на любую квартиру в Испании.",
+  claim: "Получить приз",
+  claimed: "Приз уже получен — менеджер свяжется с вами в Telegram.",
+  sub_needed: "Чтобы получить приз, подпишитесь на наш канал — бот проверит подписку.",
+  lost_title: "Игра окончена",
+  lost_text: "Жизни закончились. Возвращайтесь завтра — вопросы будут другие.",
+  score: "Верных ответов: {score} из {total}",
+  better: "Это лучше, чем у {pct}% игроков этой недели",
+  share: "📤 Поделиться результатом",
+  share_text: "Я ответил(а) на {score} из {total} вопросов о жилье в Барселоне. А ты?",
+  share_text_won: "Я прошёл(ла) квиз о жилье в Барселоне и получил(а) бесплатную nota simple. Попробуй!",
+  not_ranked: "В рейтинг попадают подписчики канала — подпишитесь, чтобы участвовать.",
+  lb_title: "Рейтинг недели",
+  lb_empty: "Пока никто не прошёл игру на этой неделе. Станьте первым!",
+  lb_me: "Ваше место: {rank} из {players}",
+  lb_you: "вы",
+  back: "Назад",
+  error: "Нет связи с сервером. Попробуйте ещё раз.",
+  only_telegram: "Откройте игру в Telegram — через бота barcelona.ru.",
+  hearts_label: "Жизни: {n}",
+};
+
+const en: typeof ru = {
+  title: "Do you know housing in Barcelona?",
+  intro: "{total} questions about buying, renting, taxes and living with property in Barcelona. You have {lives} lives — each mistake costs one.",
+  prize: "🎁 Get to the end and win a <b>free nota simple</b> for any flat.",
+  rules_attempts: "One attempt per day.",
+  start: "Start the game",
+  resume: "Continue the game",
+  best: "Your best result: {score} of {total}",
+  no_attempts: "You've already played today. Next attempt — tomorrow.",
+  leaderboard: "🏆 This week's ranking",
+  channel: "📢 Our channel",
+  question: "Question {n} of {total}",
+  next: "Next",
+  finish: "Result",
+  correct: "Correct!",
+  wrong: "Wrong",
+  tool_calc: "🧮 Calculate in the bot",
+  tool_check: "🔎 Check a flat in the bot",
+  won_title: "🏆 You answered all {total} questions!",
+  won_text: "Your prize is a <b>free nota simple</b> for any flat in Spain.",
+  claim: "Claim the prize",
+  claimed: "Prize already claimed — a manager will contact you in Telegram.",
+  sub_needed: "To claim the prize, subscribe to our channel — the bot will check.",
+  lost_title: "Game over",
+  lost_text: "You're out of lives. Come back tomorrow — the questions will be different.",
+  score: "Correct answers: {score} of {total}",
+  better: "That's better than {pct}% of players this week",
+  share: "📤 Share my result",
+  share_text: "I got {score} of {total} questions about Barcelona housing right. Can you beat it?",
+  share_text_won: "I passed the Barcelona housing quiz and won a free nota simple. Try it!",
+  not_ranked: "Only channel subscribers are ranked — subscribe to take part.",
+  lb_title: "This week's ranking",
+  lb_empty: "Nobody has finished the game this week yet. Be the first!",
+  lb_me: "Your place: {rank} of {players}",
+  lb_you: "you",
+  back: "Back",
+  error: "No connection to the server. Please try again.",
+  only_telegram: "Open the game in Telegram — via the barcelona.ru bot.",
+  hearts_label: "Lives: {n}",
+};
+
+export type Key = keyof typeof ru;
+let current: typeof ru = ru;
+
+export function setLang(lang: string | undefined): void {
+  current = lang?.startsWith("en") ? en : ru;
+  document.documentElement.lang = current === en ? "en" : "ru";
+}
+
+export function t(key: Key, params: Record<string, string | number> = {}): string {
+  return current[key].replace(/\{(\w+)\}/g, (_, k: string) => String(params[k] ?? `{${k}}`));
+}
