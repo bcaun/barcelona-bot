@@ -1,13 +1,15 @@
-# Фаза 0: работает только сервис bot.
-# Сервисы api и caddy (мини-апп, Фаза 3) включаются профилем: docker compose --profile webapp up -d
+# bot — Telegram-бот (всегда).
+# api + cloudflared — мини-апп квиза (профиль webapp: в .env COMPOSE_PROFILES=webapp).
+# Порты на сервере не открываются: cloudflared сам подключается к Cloudflare (Cloudflare Tunnel),
+# поэтому не мешает другим сайтам на портах 80/443.
 services:
   bot:
     build: .
     restart: unless-stopped
     env_file: .env
     volumes:
-      - bot_data:/data                 # база SQLite
-      - ./config:/srv/config:ro        # ставки и настройки: правка + restart, без пересборки
+      - bot_data:/data                 # база SQLite (общая с api)
+      - ./config:/srv/config:ro        # настройки и вопросы: правка + restart, без пересборки
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "5" }
@@ -17,7 +19,8 @@ services:
     profiles: [webapp]
     restart: unless-stopped
     env_file: .env
-    command: ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]
+    depends_on: [bot]                  # bot применяет миграции базы при старте
+    command: ["uvicorn", "app.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
     volumes:
       - bot_data:/data
       - ./config:/srv/config:ro
@@ -25,21 +28,17 @@ services:
       driver: json-file
       options: { max-size: "10m", max-file: "5" }
 
-  caddy:
-    image: caddy:2.8
+  cloudflared:
+    image: cloudflare/cloudflared:latest
     profiles: [webapp]
     restart: unless-stopped
     depends_on: [api]
-    ports: ["80:80", "443:443"]
+    command: ["tunnel", "--no-autoupdate", "run"]
     environment:
-      WEBAPP_DOMAIN: ${WEBAPP_DOMAIN}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./webapp/dist:/srv/webapp:ro
-      - caddy_data:/data
-      - caddy_config:/config
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
 
 volumes:
   bot_data:
-  caddy_data:
-  caddy_config:

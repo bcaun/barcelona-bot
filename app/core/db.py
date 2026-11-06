@@ -29,9 +29,13 @@ def make_engine(url: str) -> AsyncEngine:
     if engine.dialect.name == "sqlite":
 
         @event.listens_for(engine.sync_engine, "connect")
-        def _sqlite_fk_on(dbapi_conn, _):  # noqa: ANN001
+        def _sqlite_pragmas(dbapi_conn, _):  # noqa: ANN001
             cur = dbapi_conn.cursor()
             cur.execute("PRAGMA foreign_keys=ON")
+            # bot and api processes share one file: WAL + busy timeout avoid «database is locked»
+            if ":memory:" not in url:
+                cur.execute("PRAGMA journal_mode=WAL")
+            cur.execute("PRAGMA busy_timeout=5000")
             cur.close()
 
     return engine

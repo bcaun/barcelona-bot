@@ -259,9 +259,103 @@ ufw allow OpenSSH && ufw --force enable
 
 ✅ `Firewall is active and enabled on system startup`.
 
-> В Фазе 3 (мини-апп) понадобится открыть 80 и 443 — это будет в инструкции Фазы 3.
+> ⚠️ Если на сервере уже работают другие сайты (как у вас), **пропустите этот шаг** — он закроет
+> их порты. Квиз портов не требует: он работает через Cloudflare Tunnel (см. ниже).
 
 ---
+
+# Квиз «Знаешь ли ты жильё в Барселоне?» (мини-апп)
+
+Квиз открывается из бота как мини-приложение по адресу `https://barcelona.daagamma.com`.
+Порты на сервере **не открываются**: программа `cloudflared` сама подключается к Cloudflare
+(Cloudflare Tunnel), поэтому ваши сайты на портах 80/443 не затрагиваются, а HTTPS-сертификат
+выдаёт Cloudflare.
+
+Время: около 20 минут.
+
+## К1. Создать туннель в Cloudflare
+
+1. Если вы уже создали DNS-запись `barcelona` (A → 187.7.71.226) — **удалите её**:
+   Cloudflare → daagamma.com → **DNS** → запись `barcelona` → Delete. Туннель создаст свою.
+2. Откройте https://one.dash.cloudflare.com → **Networks** → **Tunnels** → **Create a tunnel**.
+3. Тип — **Cloudflared**, имя — `barcelona-bot` → **Save tunnel**.
+4. На экране установки выберите **Docker**. Там будет команда вида
+   `docker run cloudflare/cloudflared:latest tunnel ... run --token eyJhIjoi...`.
+   Скопируйте **только длинную строку после `--token`** — это токен туннеля.
+   ⚠️ Токен — секрет, никому не пересылайте. Команду на сервере запускать **не нужно**.
+5. **Next** → вкладка **Public Hostname** (или **Published application routes**) → **Add**:
+   - Subdomain: `barcelona`
+   - Domain: `daagamma.com`
+   - Service: Type **HTTP**, URL `api:8000`
+   → **Save**.
+
+✅ В списке туннелей появился `barcelona-bot` (статус станет HEALTHY после шага К2).
+
+## К2. Включить квиз на сервере
+
+```bash
+cd /opt/barcelona-bot && nano .env
+```
+
+Добавьте (или заполните, если строки уже есть) три строки:
+
+```
+WEBAPP_DOMAIN=barcelona.daagamma.com
+CLOUDFLARE_TUNNEL_TOKEN=токен_из_шага_К1
+COMPOSE_PROFILES=webapp
+```
+
+Сохраните (`Ctrl+O`, Enter, `Ctrl+X`) и запустите:
+
+```bash
+git pull && docker compose up -d --build
+```
+
+Проверьте, что работают три сервиса:
+
+```bash
+docker compose ps
+```
+
+✅ `bot`, `api` и `cloudflared` в статусе `Up`.
+
+Откройте в браузере https://barcelona.daagamma.com/api/health
+
+✅ Видно `{"status":"ok"}`. (Сама страница игры в браузере напишет «Откройте игру в
+Telegram» — так и должно быть: игра работает только внутри Telegram.)
+
+## К3. Зарегистрировать мини-апп в @BotFather
+
+1. **@BotFather** → `/newapp` → выберите своего бота.
+2. **Title:** `Квиз: жильё в Барселоне`
+3. **Description:** `25 вопросов о покупке, аренде и налогах в Барселоне. Пройдите до конца — получите бесплатную nota simple.`
+4. **Photo:** отправьте картинку 640×360 — файл `quiz-cover-640x360.png` (прислал разработчик).
+5. **GIF:** отправьте `/empty`.
+6. **Web App URL:** `https://barcelona.daagamma.com/`
+7. **Short name:** `quiz` (именно так — оно используется в ссылках «Поделиться»).
+
+✅ BotFather пришлёт ссылку вида `t.me/ваш_бот/quiz`.
+
+## К4. Проверить
+
+1. Откройте бота, отправьте `/start` → кнопка **«🎮 Квиз…»** в меню, а рядом с полем ввода — кнопка **«🎮 Квиз»**.
+2. Сыграйте: после каждого ответа — пояснение; 3 ошибки — конец игры.
+3. Победитель нажимает **«Получить приз»** → бот проверяет подписку на канал и просит контакт →
+   в группу заявок приходит карточка «Квиз (приз)».
+4. `/stats` показывает «Сыграно в квиз: N, прошли до конца: M».
+
+Для повторной проверки в тот же день (одна попытка в сутки) можно временно поставить
+`attempts_per_day: 10` в `config/settings.local.yaml` (раздел `quiz:`) и выполнить
+`docker compose restart api`.
+
+## Изменить вопросы квиза
+
+Вопросы — в файле `config/quiz.yaml` (на русском и английском, правильный ответ — `correct`,
+три неверных — `wrong`). После правки:
+
+```bash
+docker compose restart api
+```
 
 # Повседневные операции
 
@@ -423,4 +517,6 @@ docker compose start bot
 | Бот не отвечает, в логах ошибок нет | Не запущен ли тот же бот (тот же токен) где-то ещё — у Telegram может быть только одна копия. |
 | Карточки заявок не приходят в группу | `ADMIN_CHAT_ID` с минусом? Бот состоит в группе? В логах ищите `lead_notify_failed`. |
 | `/stats` отвечает «только администраторам» | Ваш ID есть в `ADMIN_IDS`? После правки `.env` — `docker compose up -d --force-recreate bot`. |
+| Квиз не открывается / «ошибка соединения» | `docker compose ps` — `api` и `cloudflared` в `Up`? В Cloudflare туннель HEALTHY? `docker compose logs --tail 30 cloudflared` |
+| Кнопка «Квиз» пишет «скоро» | Не заполнен `WEBAPP_DOMAIN` в `.env` → заполнить и `docker compose up -d --force-recreate bot` |
 | Проверка подписки всегда «не подписан» | Бот — администратор канала? `CHANNEL_ID` верный (`@username` или `-100...`)? В логах — `subscription_check_failed`. |
