@@ -29,8 +29,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.bot import keyboards as kb
 from app.bot.handlers.calc import start_calc
 from app.bot.handlers.contact import start_lead_flow
+from app.bot.handlers.payments import send_nota_invoice
 from app.bot.handlers.start import send_menu
-from app.config import CatastroSettings, Regulation, Settings, get_regulation
+from app.config import CatastroSettings, Env, Regulation, Settings, get_regulation
 from app.core import cadastre as cd
 from app.core import repo
 from app.core.models import Event, User
@@ -288,7 +289,7 @@ async def _safe(target: Message, lang: str, coro, nearby: bool = False):  # noqa
     return None
 
 
-async def _last_check(state: FSMContext, session: AsyncSession, user: User) -> dict[str, Any]:
+async def last_check(state: FSMContext, session: AsyncSession, user: User) -> dict[str, Any]:
     """Finished check from FSM (normal case) or from the last check:done event (after restart)."""
     data = await state.get_data()
     if data.get("property") and "flags" in data:
@@ -306,7 +307,7 @@ async def _last_check(state: FSMContext, session: AsyncSession, user: User) -> d
 async def _last_property(
     state: FSMContext, session: AsyncSession, user: User
 ) -> cd.Property | None:
-    d = (await _last_check(state, session, user)).get("property")
+    d = (await last_check(state, session, user)).get("property")
     try:
         return cd.Property.from_dict(d) if d else None
     except (TypeError, ValueError):
@@ -725,16 +726,21 @@ async def cb_lead(
     state: FSMContext,
     lang: str,
     settings: Settings,
+    env: Env,
     session: AsyncSession,
     user: User,
 ) -> None:
-    check = await _last_check(state, session, user)
+    check = await last_check(state, session, user)
     p = await _last_property(state, session, user)
     if p is None:
         await cq.answer(t(lang, "check.err.expired"), show_alert=True)
         return
     await cq.answer()
     lead_type = "nota_simple" if cq.data == CB_NOTA else "object_check"
+    if lead_type == "nota_simple" and env.payments_enabled and settings.nota_simple.price_eur:
+        if isinstance(cq.message, Message):
+            await send_nota_invoice(cq.message, p, lang, settings, env)
+        return
     admin_lang = settings.admin.language
     data = lead_data(p, admin_lang, check.get("listing_area"), check.get("flags"))
     if lead_type == "nota_simple" and settings.nota_simple.price_eur:

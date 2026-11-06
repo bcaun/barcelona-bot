@@ -10,7 +10,7 @@ from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.base import BaseSession
 from aiogram.enums import ParseMode
-from aiogram.methods import GetChatMember, SendDocument, SendMessage, TelegramMethod
+from aiogram.methods import GetChatMember, SendDocument, SendInvoice, SendMessage, TelegramMethod
 from aiogram.types import Chat, ChatMemberLeft, Message
 from aiogram.types import User as TgUser
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -37,7 +37,7 @@ class FakeSession(BaseSession):
 
     async def make_request(self, bot, method, timeout=None):  # noqa: ASYNC109
         self.calls.append(method)
-        if isinstance(method, SendMessage | SendDocument):
+        if isinstance(method, SendMessage | SendDocument | SendInvoice):
             self._msg_id += 1
             return Message(
                 message_id=self._msg_id,
@@ -107,3 +107,21 @@ def dp(bot, settings, env, session_factory):
     yield d
     for r in d.sub_routers:  # module-level routers attach to one dispatcher at a time
         r._parent_router = None
+
+
+@pytest.fixture
+def make_dlg(dp, bot, fake_session):
+    from app.config import CatastroSettings
+    from app.integrations.catastro import CatastroClient, CatastroService
+    from tests.helpers import tg_user
+    from tests.helpers_catastro import Dialog, catastro_router
+
+    def make(down=False, uid=70, lang="ru"):
+        transport, seen = catastro_router(down)
+        cfg = CatastroSettings(
+            retries=0, retry_pause_seconds=0, card_url_template="https://sede/?RefC={rc}"
+        )
+        dp["catastro"] = CatastroService(CatastroClient(cfg, transport), cfg)
+        return Dialog(dp, bot, fake_session, tg_user(uid, lang)), seen
+
+    return make
