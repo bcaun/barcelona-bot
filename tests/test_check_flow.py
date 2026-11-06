@@ -126,7 +126,7 @@ async def test_by_rc_card_with_flags(make_dlg):
     assert "❌ Туристическая аренда невозможна" in verdict and "⚠️ Аренда ограничена" in verdict
     assert "не показывают собственника, ипотеки" in verdict
     assert d.buttons() == ["k:nota", "k:calc", "k:details", "k:consult", "k:m:again"]
-    assert "25 €" in d.last().reply_markup.inline_keyboard[0][0].text
+    assert "29 €" in d.last().reply_markup.inline_keyboard[0][0].text
     card = await d.cb("k:details")
     assert f"RC: <code>{UNIT}</code>" in card and "531 м²" in card and "2,07%" in card
     assert f"https://sede/?RefC={UNIT}" in card and "mapa.aspx" in card
@@ -238,7 +238,7 @@ async def test_nota_simple_lead_reaches_admin(make_dlg, session_factory):
     async with session_factory() as s:
         lead = (await s.scalars(select(Lead))).one()
         assert lead.lead_type == "nota_simple" and lead.data["RC"] == UNIT
-        assert lead.data["Площадь в объявлении, м²"] == 600 and lead.data["Цена услуги"] == "25 €"
+        assert lead.data["Площадь в объявлении, м²"] == 600 and lead.data["Цена услуги"] == "29 €"
         assert "не жильё" in lead.data["Флаги"] and "площадь завышена" in lead.data["Флаги"]
 
 

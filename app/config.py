@@ -78,7 +78,7 @@ class CalcSettings(BaseModel):
 
 
 class NotaSimpleSettings(BaseModel):
-    price_eur: int = 25
+    price_eur: int = 29
     official_fee_eur: str = "9,02 € + IVA"
 
 
