@@ -277,7 +277,9 @@ ufw allow OpenSSH && ufw --force enable
 
 1. Если вы уже создали DNS-запись `barcelona` (A → 187.7.71.226) — **удалите её**:
    Cloudflare → daagamma.com → **DNS** → запись `barcelona` → Delete. Туннель создаст свою.
-2. Откройте https://one.dash.cloudflare.com → **Networks** → **Tunnels** → **Create a tunnel**.
+2. Откройте https://dash.cloudflare.com → выберите аккаунт → в левом меню **Networking** →
+   **Tunnels** → **Create a tunnel**. (Если у вас уже есть туннель для других сайтов — не трогайте
+   его, создайте отдельный.)
 3. Тип — **Cloudflared**, имя — `barcelona-bot` → **Save tunnel**.
 4. На экране установки выберите **Docker**. Там будет команда вида
    `docker run cloudflare/cloudflared:latest tunnel ... run --token eyJhIjoi...`.
