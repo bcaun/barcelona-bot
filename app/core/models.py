@@ -70,3 +70,21 @@ class CatastroCache(Base):
     key: Mapped[str] = mapped_column(String(128), primary_key=True)  # e.g. "dnprc:<RC>"
     payload: Mapped[dict[str, Any]] = mapped_column(JSON)
     fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class QuizSession(Base):
+    """One quiz attempt. `state` is app.core.quiz.Game.to_dict() (question order, answers)."""
+
+    __tablename__ = "quiz_sessions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)  # uuid4
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    local_date: Mapped[str] = mapped_column(String(10), index=True)  # YYYY-MM-DD in settings tz
+    state: Mapped[dict[str, Any]] = mapped_column(JSON)
+    score: Mapped[int] = mapped_column(Integer, default=0)
+    won: Mapped[bool] = mapped_column(default=False)
+    subscribed_at_finish: Mapped[bool] = mapped_column(default=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)

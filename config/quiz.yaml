@@ -1,0 +1,651 @@
+# Квиз «Знаешь ли ты жильё в Барселоне?» (мини-апп).
+# Каждый вопрос: id (латиница, уникальный), topic, q — вопрос, correct — верный ответ,
+# wrong — ровно 3 неверных, explain — пояснение после ответа, tool — какой инструмент бота
+# предложить после вопроса (calc / check, необязательно).
+# Порядок вариантов перемешивается для каждого игрока, правильный ответ на телефон не уходит.
+#
+# ЧЕРНОВИК: тексты написаны разработчиком 2026-11-06. Перед запуском вычитать
+# (юрист / агент) — ошибка в вопросе бьёт по репутации. После вычитки обновить reviewed_at.
+reviewed_at: ""
+
+questions:
+  - id: water_bcn
+    topic: utilities
+    q:
+      ru: "Как называется компания, которой в Барселоне платят за воду?"
+      en: "Which company do you pay for water in Barcelona?"
+    correct: { ru: "Aigües de Barcelona", en: "Aigües de Barcelona" }
+    wrong:
+      - { ru: "Canal de Isabel II", en: "Canal de Isabel II" }
+      - { ru: "Endesa", en: "Endesa" }
+      - { ru: "Naturgy", en: "Naturgy" }
+    explain:
+      ru: "Воду в Барселоне поставляет Aigües de Barcelona (группа Agbar). Canal de Isabel II — вода в Мадриде, Endesa и Naturgy — электричество и газ."
+      en: "Barcelona's water is supplied by Aigües de Barcelona (Agbar group). Canal de Isabel II is Madrid's water company; Endesa and Naturgy sell electricity and gas."
+
+  - id: nie
+    topic: documents
+    q:
+      ru: "Что такое NIE?"
+      en: "What is the NIE?"
+    correct: { ru: "Идентификационный номер иностранца", en: "Foreigner identification number" }
+    wrong:
+      - { ru: "Налог на недвижимость", en: "A property tax" }
+      - { ru: "Кадастровый номер квартиры", en: "The flat's cadastral number" }
+      - { ru: "Ипотечный сертификат банка", en: "A bank mortgage certificate" }
+    explain:
+      ru: "NIE — Número de Identidad de Extranjero. Без него не купить жильё, не открыть счёт и не заплатить налоги."
+      en: "NIE stands for Número de Identidad de Extranjero. You need it to buy property, open a bank account and pay taxes."
+
+  - id: nota_simple_who
+    topic: documents
+    tool: check
+    q:
+      ru: "Кто выдаёт nota simple — выписку о собственнике, ипотеках и арестах?"
+      en: "Who issues the nota simple — the extract showing the owner, mortgages and seizures?"
+    correct: { ru: "Registro de la Propiedad", en: "Registro de la Propiedad (Land Registry)" }
+    wrong:
+      - { ru: "Catastro", en: "Catastro" }
+      - { ru: "Нотариус", en: "A notary" }
+      - { ru: "Ayuntamiento (мэрия)", en: "Ayuntamiento (city council)" }
+    explain:
+      ru: "Кадастр описывает объект (площадь, год, назначение), а Реестр собственности — права на него: кто владелец, есть ли ипотека и аресты."
+      en: "The Catastro describes the property (area, year, use); the Land Registry records the rights: who owns it and whether there are mortgages or seizures."
+
+  - id: itp_rate
+    topic: taxes
+    tool: calc
+    q:
+      ru: "Какая ставка ITP при покупке вторички до 600 000 € в Каталонии (общая шкала)?"
+      en: "What is the ITP rate on a resale purchase up to €600,000 in Catalonia (general scale)?"
+    correct: { ru: "10%", en: "10%" }
+    wrong:
+      - { ru: "6%", en: "6%" }
+      - { ru: "8%", en: "8%" }
+      - { ru: "21%", en: "21%" }
+    explain:
+      ru: "10% до 600 000 €, дальше шкала растёт: 11%, 12% и 13% свыше 1,5 млн €. Налог считается от большего из цены и valor de referencia."
+      en: "10% up to €600,000, then the scale rises: 11%, 12% and 13% above €1.5M. Tax is charged on the higher of the price and the valor de referencia."
+
+  - id: iva_new
+    topic: taxes
+    tool: calc
+    q:
+      ru: "Какой IVA платится при покупке новой квартиры у застройщика?"
+      en: "What IVA (VAT) applies when buying a new flat from a developer?"
+    correct: { ru: "10%", en: "10%" }
+    wrong:
+      - { ru: "4%", en: "4%" }
+      - { ru: "21%", en: "21%" }
+      - { ru: "0%", en: "0%" }
+    explain:
+      ru: "Для жилья — 10% IVA (4% — только для жилья с господдержкой VPO). В Каталонии к нему добавляется AJD 1,5%."
+      en: "Dwellings carry 10% IVA (4% only for VPO social housing). In Catalonia 1.5% AJD is added on top."
+
+  - id: ajd_rate
+    topic: taxes
+    tool: calc
+    q:
+      ru: "Какая общая ставка AJD (гербовый сбор) при покупке новостройки в Каталонии?"
+      en: "What is the general AJD (stamp duty) rate on a new-build purchase in Catalonia?"
+    correct: { ru: "1,5%", en: "1.5%" }
+    wrong:
+      - { ru: "0,5%", en: "0.5%" }
+      - { ru: "3%", en: "3%" }
+      - { ru: "10%", en: "10%" }
+    explain:
+      ru: "AJD в Каталонии — 1,5%, платится вместе с IVA 10% при покупке у застройщика."
+      en: "AJD in Catalonia is 1.5%, paid together with 10% IVA when buying from a developer."
+
+  - id: itp_young
+    topic: taxes
+    tool: calc
+    q:
+      ru: "Какая льготная ставка ITP в Каталонии на основное жильё для покупателя до 35 лет (при лимите дохода)?"
+      en: "What reduced ITP rate applies in Catalonia to a main home bought by someone aged 35 or under (within the income limit)?"
+    correct: { ru: "5%", en: "5%" }
+    wrong:
+      - { ru: "0%", en: "0%" }
+      - { ru: "7%", en: "7%" }
+      - { ru: "10%", en: "10%" }
+    explain:
+      ru: "5% вместо общей шкалы — для основного жилья (vivienda habitual) при соблюдении лимита дохода. Та же ставка — для многодетных, неполных семей и людей с инвалидностью от 65%."
+      en: "5% instead of the general scale for a main home within the income limit. The same rate applies to large and single-parent families and people with a 65%+ disability."
+
+  - id: large_holder
+    topic: taxes
+    q:
+      ru: "Какая ставка ITP в Каталонии для «крупных собственников» (больше 10 жилых объектов)?"
+      en: "What ITP rate applies in Catalonia to 'large holders' (more than 10 dwellings)?"
+    correct: { ru: "20%", en: "20%" }
+    wrong:
+      - { ru: "13%", en: "13%" }
+      - { ru: "10%", en: "10%" }
+      - { ru: "5%", en: "5%" }
+    explain:
+      ru: "Для крупных собственников (больше 10 жилых объектов или 1 500 м² жилья) ставка ITP — 20%. Есть исключения — уточняйте у специалиста."
+      en: "Large holders (more than 10 dwellings or 1,500 m² of housing) pay 20% ITP. There are exceptions — check with a specialist."
+
+  - id: ibi
+    topic: taxes
+    q:
+      ru: "Как называется ежегодный муниципальный налог на недвижимость?"
+      en: "What is the annual municipal property tax called?"
+    correct: { ru: "IBI", en: "IBI" }
+    wrong:
+      - { ru: "ITP", en: "ITP" }
+      - { ru: "IRPF", en: "IRPF" }
+      - { ru: "AJD", en: "AJD" }
+    explain:
+      ru: "IBI (Impuesto sobre Bienes Inmuebles) платят мэрии каждый год. В квитанции IBI указана кадастровая стоимость — valor catastral."
+      en: "IBI (Impuesto sobre Bienes Inmuebles) is paid to the city council every year. The IBI bill shows the cadastral value (valor catastral)."
+
+  - id: ibi_jan1
+    topic: taxes
+    q:
+      ru: "Квартиру продали в июле. Кто по закону должен заплатить IBI за этот год?"
+      en: "A flat is sold in July. Who is legally liable for that year's IBI?"
+    correct: { ru: "Собственник на 1 января", en: "The owner on 1 January" }
+    wrong:
+      - { ru: "Покупатель", en: "The buyer" }
+      - { ru: "Пополам — так требует закон", en: "Half each, as the law requires" }
+      - { ru: "Собственник на 31 декабря", en: "The owner on 31 December" }
+    explain:
+      ru: "Налог начисляется на 1 января, поэтому платит тот, кто был собственником в этот день. На практике в договоре часто делят сумму пропорционально."
+      en: "IBI accrues on 1 January, so whoever owned the property that day is liable. In practice the contract often splits it pro rata."
+
+  - id: plusvalia
+    topic: taxes
+    q:
+      ru: "Кто по закону платит plusvalía municipal при продаже квартиры?"
+      en: "Who legally pays the plusvalía municipal when a flat is sold?"
+    correct: { ru: "Продавец", en: "The seller" }
+    wrong:
+      - { ru: "Покупатель", en: "The buyer" }
+      - { ru: "Агентство недвижимости", en: "The estate agency" }
+      - { ru: "Нотариус", en: "The notary" }
+    explain:
+      ru: "Plusvalía — муниципальный налог на рост стоимости земли за время владения. При продаже его платит продавец."
+      en: "The plusvalía is a municipal tax on the increase in land value during ownership. In a sale it is paid by the seller."
+
+  - id: irnr_imputed
+    topic: taxes
+    tool: calc
+    q:
+      ru: "Нерезидент владеет квартирой в Испании и не сдаёт её. Платит ли он налог на доход?"
+      en: "A non-resident owns a flat in Spain and doesn't rent it out. Do they pay income tax?"
+    correct: { ru: "Да, на условный (вменённый) доход", en: "Yes, on imputed (deemed) income" }
+    wrong:
+      - { ru: "Нет, раз дохода нет", en: "No, since there is no income" }
+      - { ru: "Только при продаже", en: "Only when selling" }
+      - { ru: "Только если живёт в Испании больше 183 дней", en: "Only if they stay in Spain over 183 days" }
+    explain:
+      ru: "Нерезиденты платят IRNR с условного дохода: процент от кадастровой стоимости × ставка (19% для ЕС/ЕЭЗ, 24% для остальных)."
+      en: "Non-residents pay IRNR on imputed income: a percentage of the cadastral value × the rate (19% for EU/EEA, 24% for others)."
+
+  - id: modelo210
+    topic: taxes
+    q:
+      ru: "Какой формой (modelo) нерезидент декларирует доход от недвижимости в Испании?"
+      en: "Which form (modelo) does a non-resident use to declare property income in Spain?"
+    correct: { ru: "Modelo 210", en: "Modelo 210" }
+    wrong:
+      - { ru: "Modelo 600", en: "Modelo 600" }
+      - { ru: "Modelo 100", en: "Modelo 100" }
+      - { ru: "Modelo 036", en: "Modelo 036" }
+    explain:
+      ru: "Modelo 210 — декларация налога нерезидентов (IRNR): и вменённый доход, и аренда. Modelo 100 — IRPF для резидентов."
+      en: "Modelo 210 is the non-resident income tax (IRNR) return, both imputed and rental income. Modelo 100 is the resident IRPF return."
+
+  - id: atc
+    topic: taxes
+    q:
+      ru: "Кому платят ITP при покупке вторички в Каталонии?"
+      en: "Who collects the ITP on a resale purchase in Catalonia?"
+    correct: { ru: "Agència Tributària de Catalunya", en: "Agència Tributària de Catalunya" }
+    wrong:
+      - { ru: "Agencia Tributaria (государственная)", en: "Agencia Tributaria (state)" }
+      - { ru: "Ayuntamiento (мэрия)", en: "Ayuntamiento (city council)" }
+      - { ru: "Нотариусу", en: "The notary" }
+    explain:
+      ru: "ITP — налог автономного сообщества, в Каталонии его собирает Agència Tributària de Catalunya (ATC)."
+      en: "ITP is a regional tax; in Catalonia it is collected by the Agència Tributària de Catalunya (ATC)."
+
+  - id: valor_referencia
+    topic: taxes
+    tool: calc
+    q:
+      ru: "Кто определяет valor de referencia объекта?"
+      en: "Who sets a property's valor de referencia?"
+    correct: { ru: "Dirección General del Catastro", en: "Dirección General del Catastro" }
+    wrong:
+      - { ru: "Банк при оценке", en: "The bank at valuation" }
+      - { ru: "Нотариус", en: "The notary" }
+      - { ru: "Агентство недвижимости", en: "The estate agency" }
+    explain:
+      ru: "Valor de referencia рассчитывает Кадастр. ITP считается от большего из двух значений: цены сделки или valor de referencia."
+      en: "The valor de referencia is calculated by the Catastro. ITP is charged on the higher of the sale price and the valor de referencia."
+
+  - id: cedula
+    topic: documents
+    q:
+      ru: "Что подтверждает cédula de habitabilidad?"
+      en: "What does the cédula de habitabilidad certify?"
+    correct: { ru: "Что помещение пригодно для проживания", en: "That the premises are fit to live in" }
+    wrong:
+      - { ru: "Право собственности", en: "Ownership" }
+      - { ru: "Отсутствие долгов по квартире", en: "That there are no debts on the flat" }
+      - { ru: "Класс энергоэффективности", en: "The energy efficiency rating" }
+    explain:
+      ru: "Cédula подтверждает, что жильё соответствует нормам проживания. В Каталонии она нужна для продажи, аренды и подключения коммунальных услуг."
+      en: "The cédula certifies that the dwelling meets habitability standards. In Catalonia it is needed to sell, rent and connect utilities."
+
+  - id: commercial_use
+    topic: documents
+    tool: check
+    q:
+      ru: "Квартира в кадастре числится как «Comercial». Что это значит?"
+      en: "A flat is listed in the cadastre as 'Comercial'. What does that mean?"
+    correct: { ru: "Это коммерческое помещение, а не жильё", en: "It is commercial premises, not a dwelling" }
+    wrong:
+      - { ru: "Квартиру можно сдавать туристам", en: "It can be let to tourists" }
+      - { ru: "Это обычная квартира, просто дорогая", en: "It is an ordinary flat, just expensive" }
+      - { ru: "Квартира продаётся через агентство", en: "It is being sold through an agency" }
+    explain:
+      ru: "Под видом квартиры иногда продают коммерческое помещение. Без смены назначения могут быть проблемы с cédula, ипотекой и пропиской. Проверить назначение можно в нашем боте."
+      en: "Commercial premises are sometimes sold as flats. Without a change of use there may be problems with the cédula, mortgage and registration. You can check the use in our bot."
+
+  - id: empadronamiento
+    topic: documents
+    q:
+      ru: "Как называется регистрация по месту жительства в мэрии?"
+      en: "What is registration of your address with the city council called?"
+    correct: { ru: "Empadronamiento", en: "Empadronamiento" }
+    wrong:
+      - { ru: "Escritura", en: "Escritura" }
+      - { ru: "Arras", en: "Arras" }
+      - { ru: "Tasación", en: "Tasación" }
+    explain:
+      ru: "Empadronamiento — запись в padrón municipal. Нужна для школы, врача, многих документов."
+      en: "Empadronamiento means registering in the padrón municipal. You need it for schools, healthcare and many procedures."
+
+  - id: cert_energy
+    topic: documents
+    q:
+      ru: "Какой документ с буквами от A до G обязателен для продажи или сдачи жилья?"
+      en: "Which document with letters from A to G is required to sell or rent a home?"
+    correct: { ru: "Сертификат энергоэффективности", en: "Energy performance certificate" }
+    wrong:
+      - { ru: "Cédula de habitabilidad", en: "Cédula de habitabilidad" }
+      - { ru: "Nota simple", en: "Nota simple" }
+      - { ru: "ITE", en: "ITE" }
+    explain:
+      ru: "Certificado de eficiencia energética показывает класс от A (лучший) до G. Его нужно иметь при продаже и сдаче, класс указывают в объявлении."
+      en: "The certificado de eficiencia energética rates the home from A (best) to G. It is required for sale and rental, and the rating must appear in the listing."
+
+  - id: ite
+    topic: documents
+    tool: check
+    q:
+      ru: "Что такое ITE?"
+      en: "What is the ITE?"
+    correct: { ru: "Техническая инспекция здания", en: "Technical inspection of the building" }
+    wrong:
+      - { ru: "Налог на имущество", en: "A property tax" }
+      - { ru: "Лицензия на туристическую аренду", en: "A tourist rental licence" }
+      - { ru: "Страховка от пожара", en: "Fire insurance" }
+    explain:
+      ru: "ITE (Inspección Técnica de Edificios) обязательна для старых зданий. Если по ней есть предписания, ремонт оплачивают собственники — уточняйте до покупки."
+      en: "The ITE (Inspección Técnica de Edificios) is mandatory for older buildings. If it orders repairs, owners pay for them — check before buying."
+
+  - id: derrama
+    topic: community
+    q:
+      ru: "Что такое derrama?"
+      en: "What is a derrama?"
+    correct: { ru: "Разовый дополнительный взнос собственников на ремонт", en: "A one-off extra levy on owners for repairs" }
+    wrong:
+      - { ru: "Ежемесячная плата за воду", en: "The monthly water bill" }
+      - { ru: "Налог при продаже", en: "A tax on sale" }
+      - { ru: "Штраф за шум", en: "A noise fine" }
+    explain:
+      ru: "Derrama — экстраординарный взнос, который сообщество собственников собирает на крупный ремонт: фасад, лифт, крыша. Перед покупкой спросите, нет ли утверждённых derramas."
+      en: "A derrama is an extraordinary contribution the owners' community raises for major works: facade, lift, roof. Before buying, ask whether any derramas have been approved."
+
+  - id: arras
+    topic: purchase
+    q:
+      ru: "По договору arras penitenciales покупатель передумал. Что будет с задатком?"
+      en: "Under an arras penitenciales contract, the buyer backs out. What happens to the deposit?"
+    correct: { ru: "Он остаётся у продавца", en: "The seller keeps it" }
+    wrong:
+      - { ru: "Возвращается покупателю полностью", en: "It is returned to the buyer in full" }
+      - { ru: "Возвращается половина", en: "Half is returned" }
+      - { ru: "Переходит агентству", en: "It goes to the agency" }
+    explain:
+      ru: "Покупатель теряет задаток, а если передумал продавец — он возвращает его в двойном размере."
+      en: "The buyer loses the deposit; if the seller backs out, they return it doubled."
+
+  - id: arras_amount
+    topic: purchase
+    q:
+      ru: "Какой задаток (arras) обычно вносят при бронировании квартиры в Испании?"
+      en: "What deposit (arras) is usually paid when reserving a flat in Spain?"
+    correct: { ru: "Около 10% от цены", en: "About 10% of the price" }
+    wrong:
+      - { ru: "50% от цены", en: "50% of the price" }
+      - { ru: "Ровно 1 000 €", en: "Exactly €1,000" }
+      - { ru: "Задаток в Испании запрещён", en: "Deposits are banned in Spain" }
+    explain:
+      ru: "Обычно — около 10%, но сумма договорная. Главное — тип arras и условия возврата, их стоит проверить до подписания."
+      en: "Usually about 10%, but the amount is negotiable. What matters is the type of arras and the refund terms — check them before signing."
+
+  - id: escritura
+    topic: purchase
+    q:
+      ru: "Где подписывается escritura de compraventa — договор купли-продажи?"
+      en: "Where is the escritura de compraventa (deed of sale) signed?"
+    correct: { ru: "У нотариуса", en: "Before a notary" }
+    wrong:
+      - { ru: "В Кадастре", en: "At the Catastro" }
+      - { ru: "В мэрии", en: "At the city council" }
+      - { ru: "Онлайн в банке", en: "Online at the bank" }
+    explain:
+      ru: "Escritura подписывают у нотариуса, затем её регистрируют в Registro de la Propiedad — так покупатель становится собственником для третьих лиц."
+      en: "The escritura is signed before a notary and then registered at the Land Registry, which makes the buyer's ownership effective against third parties."
+
+  - id: gestoria
+    topic: purchase
+    q:
+      ru: "Чем занимается gestoría при покупке квартиры?"
+      en: "What does a gestoría do in a property purchase?"
+    correct: { ru: "Платит налоги и регистрирует сделку", en: "Pays the taxes and registers the deed" }
+    wrong:
+      - { ru: "Выдаёт ипотеку", en: "Grants the mortgage" }
+      - { ru: "Оценивает квартиру для банка", en: "Values the flat for the bank" }
+      - { ru: "Подписывает договор вместо покупателя", en: "Signs the contract for the buyer" }
+    explain:
+      ru: "Gestoría берёт на себя бумажную часть: подаёт декларацию ITP, платит налоги и регистрирует escritura в Реестре."
+      en: "A gestoría handles the paperwork: files the ITP return, pays the taxes and registers the escritura at the Land Registry."
+
+  - id: aicat
+    topic: purchase
+    q:
+      ru: "Где должно быть зарегистрировано агентство недвижимости в Каталонии?"
+      en: "Where must an estate agency be registered in Catalonia?"
+    correct: { ru: "В Registre d'Agents Immobiliaris de Catalunya", en: "In the Registre d'Agents Immobiliaris de Catalunya" }
+    wrong:
+      - { ru: "В Кадастре", en: "At the Catastro" }
+      - { ru: "В Registro de la Propiedad", en: "At the Land Registry" }
+      - { ru: "Регистрация не нужна", en: "No registration is required" }
+    explain:
+      ru: "В Каталонии агентства обязаны состоять в реестре агентов недвижимости — номер AICAT обычно указан на сайте и в договоре."
+      en: "In Catalonia agencies must be listed in the register of estate agents — the AICAT number is usually shown on the website and in contracts."
+
+  - id: notary_choice
+    topic: mortgage
+    q:
+      ru: "Кто выбирает нотариуса при покупке с ипотекой?"
+      en: "Who chooses the notary when buying with a mortgage?"
+    correct: { ru: "Покупатель (заёмщик)", en: "The buyer (borrower)" }
+    wrong:
+      - { ru: "Банк", en: "The bank" }
+      - { ru: "Продавец", en: "The seller" }
+      - { ru: "Агентство", en: "The agency" }
+    explain:
+      ru: "По закону об ипотечном кредите (Ley 5/2019) нотариуса выбирает заёмщик, а нотариус бесплатно консультирует его по условиям ипотеки."
+      en: "Under the mortgage credit law (Ley 5/2019) the borrower chooses the notary, who advises them on the mortgage terms free of charge."
+
+  - id: fein
+    topic: mortgage
+    q:
+      ru: "Что такое FEIN?"
+      en: "What is the FEIN?"
+    correct: { ru: "Стандартный документ банка с условиями ипотеки", en: "The bank's standard mortgage terms document" }
+    wrong:
+      - { ru: "Налоговая декларация", en: "A tax return" }
+      - { ru: "Справка из Кадастра", en: "A Catastro certificate" }
+      - { ru: "Договор аренды", en: "A rental contract" }
+    explain:
+      ru: "FEIN (Ficha Europea de Información Normalizada) банк обязан выдать заранее — не позже чем за 10 дней до подписания ипотеки."
+      en: "The bank must give you the FEIN (Ficha Europea de Información Normalizada) in advance — at least 10 days before the mortgage is signed."
+
+  - id: euribor
+    topic: mortgage
+    q:
+      ru: "К какому индексу чаще всего привязаны ипотеки с плавающей ставкой в Испании?"
+      en: "Which index are most variable-rate mortgages in Spain linked to?"
+    correct: { ru: "Euríbor", en: "Euríbor" }
+    wrong:
+      - { ru: "IPC (инфляция)", en: "IPC (inflation)" }
+      - { ru: "IBEX 35", en: "IBEX 35" }
+      - { ru: "Курс доллара", en: "The dollar exchange rate" }
+    explain:
+      ru: "Плавающая ставка = Euríbor + маржа банка, пересматривается раз в 6 или 12 месяцев."
+      en: "A variable rate = Euríbor + the bank's margin, reviewed every 6 or 12 months."
+
+  - id: tasacion
+    topic: mortgage
+    q:
+      ru: "Как называется оценка квартиры для ипотеки?"
+      en: "What is the mortgage valuation of a flat called?"
+    correct: { ru: "Tasación", en: "Tasación" }
+    wrong:
+      - { ru: "Nota simple", en: "Nota simple" }
+      - { ru: "Escritura", en: "Escritura" }
+      - { ru: "Arras", en: "Arras" }
+    explain:
+      ru: "Tasación делает аккредитованная оценочная компания. Банк считает процент кредита от меньшего из цены и оценки."
+      en: "The tasación is carried out by an accredited valuation company. The bank lends a percentage of the lower of the price and the valuation."
+
+  - id: nonresident_ltv
+    topic: mortgage
+    q:
+      ru: "Сколько обычно финансируют испанские банки нерезидентам при покупке жилья?"
+      en: "How much do Spanish banks usually lend to non-residents buying a home?"
+    correct: { ru: "Меньше, чем резидентам — часто 60–70%", en: "Less than to residents — often 60–70%" }
+    wrong:
+      - { ru: "Всегда 100% стоимости", en: "Always 100% of the price" }
+      - { ru: "Нерезидентам ипотеку не дают", en: "Non-residents can't get a mortgage" }
+      - { ru: "Ровно 90%", en: "Exactly 90%" }
+    explain:
+      ru: "Нерезиденты могут получить ипотеку, но обычно на меньшую долю — значит, собственных средств нужно больше. Посчитать бюджет можно в нашем калькуляторе."
+      en: "Non-residents can get a mortgage, but usually for a lower share, so more of your own funds is needed. Our calculator shows the budget."
+    tool: calc
+
+  - id: fianza_amount
+    topic: rental
+    q:
+      ru: "Какой залог (fianza) требует закон при долгосрочной аренде жилья?"
+      en: "What deposit (fianza) does the law require for a long-term home rental?"
+    correct: { ru: "Одна месячная плата", en: "One month's rent" }
+    wrong:
+      - { ru: "Две месячные платы", en: "Two months' rent" }
+      - { ru: "Три месячные платы", en: "Three months' rent" }
+      - { ru: "Полгода аренды", en: "Six months' rent" }
+    explain:
+      ru: "По закону об аренде (LAU) залог за жильё — один месяц. Дополнительные гарантии ограничены законом."
+      en: "Under the rental law (LAU) the deposit for a home is one month's rent. Any additional guarantees are capped by law."
+
+  - id: fianza_incasol
+    topic: rental
+    q:
+      ru: "Куда в Каталонии собственник обязан внести залог арендатора?"
+      en: "Where must a landlord in Catalonia deposit the tenant's fianza?"
+    correct: { ru: "В INCASÒL", en: "With INCASÒL" }
+    wrong:
+      - { ru: "На свой банковский счёт", en: "Into their own bank account" }
+      - { ru: "В мэрию", en: "At the city council" }
+      - { ru: "У нотариуса", en: "With a notary" }
+    explain:
+      ru: "В Каталонии залог депонируют в INCASÒL (Institut Català del Sòl) — так он защищён до конца договора."
+      en: "In Catalonia the deposit is lodged with INCASÒL (Institut Català del Sòl), which protects it until the contract ends."
+
+  - id: lau_duration
+    topic: rental
+    q:
+      ru: "Сколько лет, с учётом продлений по закону, может длиться аренда жилья, если арендодатель — частное лицо?"
+      en: "How many years, including statutory extensions, can a home rental last if the landlord is an individual?"
+    correct: { ru: "5 лет", en: "5 years" }
+    wrong:
+      - { ru: "1 год", en: "1 year" }
+      - { ru: "3 года", en: "3 years" }
+      - { ru: "10 лет", en: "10 years" }
+    explain:
+      ru: "Арендатор вправе продлевать договор до 5 лет, если арендодатель — частное лицо, и до 7 лет, если компания."
+      en: "The tenant may extend the contract up to 5 years if the landlord is an individual, and up to 7 years if it is a company."
+
+  - id: lau_company
+    topic: rental
+    q:
+      ru: "А если арендодатель — компания, сколько может длиться аренда с продлениями?"
+      en: "And if the landlord is a company, how long can the rental last with extensions?"
+    correct: { ru: "7 лет", en: "7 years" }
+    wrong:
+      - { ru: "5 лет", en: "5 years" }
+      - { ru: "2 года", en: "2 years" }
+      - { ru: "Без ограничений", en: "Unlimited" }
+    explain:
+      ru: "Для арендодателей-юрлиц обязательное продление — до 7 лет."
+      en: "For corporate landlords the mandatory extension runs up to 7 years."
+
+  - id: rent_agency_fee
+    topic: rental
+    q:
+      ru: "Кто платит агентству при сдаче жилья в аренду после закона о жилье 2023 года?"
+      en: "Who pays the agency for a home rental since the 2023 housing law?"
+    correct: { ru: "Арендодатель", en: "The landlord" }
+    wrong:
+      - { ru: "Арендатор", en: "The tenant" }
+      - { ru: "Пополам", en: "Half each" }
+      - { ru: "Государство", en: "The state" }
+    explain:
+      ru: "По закону о праве на жильё (Ley 12/2023) расходы на агентство и оформление договора несёт арендодатель."
+      en: "Under the right to housing law (Ley 12/2023) agency and contract costs are borne by the landlord."
+
+  - id: tensionado
+    topic: rental
+    q:
+      ru: "Барселона — «zona de mercado residencial tensionado». Что это значит для аренды?"
+      en: "Barcelona is a 'zona de mercado residencial tensionado'. What does that mean for rentals?"
+    correct: { ru: "Арендная плата ограничена индексом цен", en: "Rent is capped by a price index" }
+    wrong:
+      - { ru: "Сдавать жильё запрещено", en: "Renting out is banned" }
+      - { ru: "Иностранцы платят двойной налог", en: "Foreigners pay double tax" }
+      - { ru: "Нужна туристическая лицензия", en: "A tourist licence is required" }
+    explain:
+      ru: "В зонах напряжённого рынка арендная плата по новым договорам ограничена индексом референсных цен. Это влияет на доходность — посчитайте в калькуляторе."
+      en: "In stressed market areas rent under new contracts is capped by the reference price index. This affects the yield — check it in our calculator."
+    tool: calc
+
+  - id: hutb
+    topic: rental
+    q:
+      ru: "С каких букв начинается номер туристической лицензии квартиры в Барселоне?"
+      en: "What letters start the tourist licence number of a Barcelona flat?"
+    correct: { ru: "HUTB", en: "HUTB" }
+    wrong:
+      - { ru: "NIE", en: "NIE" }
+      - { ru: "LAU", en: "LAU" }
+      - { ru: "IBI", en: "IBI" }
+    explain:
+      ru: "HUT — habitatge d'ús turístic, B — Барселона. Новые лицензии не выдаются, а действующие планируется прекратить к ноябрю 2028 года."
+      en: "HUT stands for habitatge d'ús turístic, B for Barcelona. No new licences are issued, and existing ones are planned to end by November 2028."
+
+  - id: golden_visa
+    topic: purchase
+    q:
+      ru: "Что сейчас с «золотой визой» за покупку недвижимости в Испании?"
+      en: "What is the current status of Spain's property 'golden visa'?"
+    correct: { ru: "Её отменили в 2025 году", en: "It was abolished in 2025" }
+    wrong:
+      - { ru: "Дают при покупке от 250 000 €", en: "Granted for purchases over €250,000" }
+      - { ru: "Дают при покупке от 100 000 €", en: "Granted for purchases over €100,000" }
+      - { ru: "Действует только в Каталонии", en: "Only available in Catalonia" }
+    explain:
+      ru: "Визу за инвестиции в недвижимость отменили в апреле 2025 года (Ley 1/2025). Покупать жильё иностранцам по-прежнему можно."
+      en: "The property investment visa was abolished in April 2025 (Ley 1/2025). Foreigners can still buy property."
+
+  - id: vpo
+    topic: purchase
+    q:
+      ru: "Что такое VPO?"
+      en: "What is VPO housing?"
+    correct: { ru: "Жильё с господдержкой и ограниченной ценой", en: "State-protected housing with a capped price" }
+    wrong:
+      - { ru: "Элитное жильё у моря", en: "Luxury seafront housing" }
+      - { ru: "Квартира с туристической лицензией", en: "A flat with a tourist licence" }
+      - { ru: "Коммерческое помещение", en: "Commercial premises" }
+    explain:
+      ru: "VPO (vivienda de protección oficial) продаётся и сдаётся по ограниченной цене и с условиями для покупателя. Перед покупкой важно проверить, не числится ли квартира VPO."
+      en: "VPO (vivienda de protección oficial) is sold and rented at capped prices with buyer conditions. Before buying, check whether a flat is VPO."
+
+  - id: districts
+    topic: barcelona
+    q:
+      ru: "Сколько районов (districtes) в Барселоне?"
+      en: "How many districts (districtes) does Barcelona have?"
+    correct: { ru: "10", en: "10" }
+    wrong:
+      - { ru: "6", en: "6" }
+      - { ru: "12", en: "12" }
+      - { ru: "22", en: "22" }
+    explain:
+      ru: "10 районов: от Ciutat Vella и Eixample до Sant Martí. Внутри них — 73 квартала (barris)."
+      en: "Ten districts, from Ciutat Vella and Eixample to Sant Martí, divided into 73 neighbourhoods (barris)."
+
+  - id: principal
+    topic: barcelona
+    q:
+      ru: "Что означает «principal» в адресе барселонского дома?"
+      en: "What does 'principal' mean in a Barcelona address?"
+    correct: { ru: "Этаж над entresuelo, ниже первого", en: "The floor above the entresuelo, below the first" }
+    wrong:
+      - { ru: "Главный вход", en: "The main entrance" }
+      - { ru: "Мансарда", en: "The attic" }
+      - { ru: "Подвал", en: "The basement" }
+    explain:
+      ru: "В старых домах счёт идёт: bajos, entresuelo, principal и только потом 1-й этаж. Поэтому «1-й этаж» может быть на высоте 3–4 этажей."
+      en: "In older buildings the order is bajos, entresuelo, principal and only then the 1st floor, so a '1st floor' can be three or four storeys up."
+
+  - id: atico
+    topic: barcelona
+    q:
+      ru: "«Ático» в объявлении — это…"
+      en: "An 'ático' in a listing is…"
+    correct: { ru: "Верхний этаж, часто с террасой", en: "The top floor, often with a terrace" }
+    wrong:
+      - { ru: "Подвальное помещение", en: "A basement" }
+      - { ru: "Полуэтаж над магазином", en: "A mezzanine above a shop" }
+      - { ru: "Квартира с садом", en: "A flat with a garden" }
+    explain:
+      ru: "Ático — последний этаж здания, обычно с террасой. «Sobreático» — этаж ещё выше, над áticoм."
+      en: "An ático is the top floor, usually with a terrace. A 'sobreático' sits above the ático."
+
+  - id: xamfra
+    topic: barcelona
+    q:
+      ru: "Как называются срезанные углы кварталов Эшампле?"
+      en: "What are the cut-off corners of Eixample blocks called?"
+    correct: { ru: "Xamfrà (chaflán)", en: "Xamfrà (chaflán)" }
+    wrong:
+      - { ru: "Pati", en: "Pati" }
+      - { ru: "Mirador", en: "Mirador" }
+      - { ru: "Terrat", en: "Terrat" }
+    explain:
+      ru: "Ильдефонс Серда спроектировал кварталы со скошенными углами — xamfrans. Квартиры на углу часто светлее и с необычной планировкой."
+      en: "Ildefons Cerdà designed the blocks with chamfered corners — xamfrans. Corner flats are often brighter, with unusual layouts."
+
+  - id: finca_regia
+    topic: barcelona
+    q:
+      ru: "Что такое «finca regia»?"
+      en: "What is a 'finca regia'?"
+    correct: { ru: "Старый представительный дом с высокими потолками", en: "A stately old building with high ceilings" }
+    wrong:
+      - { ru: "Новостройка класса люкс", en: "A luxury new build" }
+      - { ru: "Загородный дом", en: "A country house" }
+      - { ru: "Муниципальное жильё", en: "Council housing" }
+    explain:
+      ru: "Так называют исторические дома, часто в Эшампле: высокие потолки, лепнина, мозаичные полы. Ценятся, но обычно требуют проверки ITE."
+      en: "The term describes historic buildings, often in Eixample: high ceilings, mouldings, mosaic floors. Sought after, but usually worth an ITE check."

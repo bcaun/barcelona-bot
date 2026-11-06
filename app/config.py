@@ -88,6 +88,16 @@ class CalcSettings(BaseModel):
     price_max_eur: int = 100_000_000
 
 
+class QuizSettings(BaseModel):
+    questions_per_game: int = 25
+    lives: int = 3
+    attempts_per_day: int = 1
+    prize_requires_subscription: bool = True
+    leaderboard_size: int = 50
+    max_answers_per_hour: int = 60
+    app_short_name: str = "quiz"  # Mini App short name from @BotFather /newapp
+
+
 class NotaSimpleSettings(BaseModel):
     price_eur: int = 29
     currency: str = "EUR"
@@ -120,6 +130,7 @@ class Settings(BaseModel):
     calc: CalcSettings = Field(default_factory=CalcSettings)
     catastro: CatastroSettings = Field(default_factory=CatastroSettings)
     nota_simple: NotaSimpleSettings = Field(default_factory=NotaSimpleSettings)
+    quiz: QuizSettings = Field(default_factory=QuizSettings)
 
 
 def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:

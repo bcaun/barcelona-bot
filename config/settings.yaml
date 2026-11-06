@@ -36,6 +36,16 @@ calc:
   price_min_eur: 10000          # защита от опечаток при вводе цены
   price_max_eur: 100000000
 
+quiz:
+  # Мини-апп «Знаешь ли ты жильё в Барселоне?». Вопросы — config/quiz.yaml.
+  questions_per_game: 25
+  lives: 3                          # ошибок до проигрыша
+  attempts_per_day: 1               # попыток в день на пользователя (сутки по timezone)
+  prize_requires_subscription: true # приз (бесплатная nota simple) — только подписчикам канала
+  leaderboard_size: 50
+  max_answers_per_hour: 60          # защита от ботов
+  app_short_name: "quiz"            # short name мини-аппа в @BotFather (/newapp)
+
 nota_simple:
   # Цена услуги «заказать nota simple через нас» для клиента, €. 0 — бесплатно (цена не показывается).
   price_eur: 29
