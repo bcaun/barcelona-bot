@@ -95,7 +95,12 @@ def bot(fake_session: FakeSession) -> Bot:
 
 @pytest.fixture
 def settings():
-    return get_settings()
+    s = get_settings()
+    saved = s.model_copy(deep=True)
+    yield s
+    # tests may tweak settings in place; restore the shared cached object
+    for name in type(s).model_fields:
+        setattr(s, name, getattr(saved, name))
 
 
 @pytest.fixture

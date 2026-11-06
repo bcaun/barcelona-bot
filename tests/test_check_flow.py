@@ -142,7 +142,8 @@ async def test_not_found(make_dlg):
     assert "ничего не нашлось" in await d.say("2749704YJ0624N0002FO")  # valid, not in cadastre
 
 
-async def test_nota_simple_lead_reaches_admin(make_dlg, session_factory):
+async def test_nota_simple_lead_reaches_admin(make_dlg, session_factory, settings):
+    settings.nota_simple.payment_link_url = ""  # no online payment -> plain lead form
     d, _ = make_dlg()
     await d.cb("menu:check")
     await d.cb("k:m:rc")

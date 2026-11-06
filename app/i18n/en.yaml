@@ -321,7 +321,19 @@ pay:
   description: "Land Registry extract: {address} (RC {rc})"
   outdated: "The price has changed or the invoice is out of date. Tap “Nota simple” again."
   thanks: "✅ Payment received — {amount}. Order number: #{lead_id}.\nWe'll order the nota simple for {rc} and send it here within one business day."
+  offer_link: |-
+    📄 <b>Nota simple — {price} €</b>
+    Land Registry extract for <b>{address}</b>: who the owner is, and whether there is a mortgage, seizures or other encumbrances.
+
+    We'll order it from the registry and send it here in Telegram within one business day after payment. Pay by card, Apple Pay or Google Pay on a secure Stripe page.
+
+    By tapping “Order” you agree to the processing of your data to fulfil the order — <a href="{privacy_url}">privacy policy</a>.
+  order_button: "✅ Order for {price} €"
+  pay_button: "💳 Pay {price} €"
+  link_ready: "Order #{lead_id} created. Pay with the button below — we start right after payment."
+  awaiting: "⏳ awaiting payment (Stripe Payment Link)"
   lead:
     paid: "Payment"
     email: "Receipt e-mail"
     charge: "Stripe charge"
+    reference: "Stripe client reference"

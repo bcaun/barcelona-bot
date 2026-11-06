@@ -92,6 +92,7 @@ class NotaSimpleSettings(BaseModel):
     price_eur: int = 29
     currency: str = "EUR"
     official_fee_eur: str = "9,02 € + IVA"
+    payment_link_url: str = ""
 
 
 class CatastroSettings(BaseModel):

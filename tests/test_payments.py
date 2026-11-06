@@ -92,7 +92,37 @@ async def test_successful_payment_creates_paid_lead(
         assert ev.payload["amount"] == 2900
 
 
-async def test_without_token_falls_back_to_lead_form(make_dlg, fake_session):
+async def test_payment_link_order(make_dlg, fake_session, session_factory, settings):
+    settings.nota_simple.payment_link_url = "https://buy.stripe.com/test_abc"
+    d, _ = make_dlg(uid=83)
+    await _checked(d)
+    offer = await d.cb("k:nota")
+    assert "Nota simple — 29 €" in offer and "политика конфиденциальности" in offer
+    assert d.buttons()[0] == "k:order"
+    ready = await d.cb("k:order")
+    assert "Заказ #1 создан" in ready
+    btn = d.last().reply_markup.inline_keyboard[0][0]
+    assert btn.text == "💳 Оплатить 29 €"
+    assert btn.url == "https://buy.stripe.com/test_abc?client_reference_id=bcnbot-lead-1"
+    cards = [c.text for c in fake_session.sent() if c.chat_id == ADMIN_CHAT]
+    assert len(cards) == 1 and "⏳ ожидает оплаты" in cards[0] and "bcnbot-lead-1" in cards[0]
+    assert "площадь завышена" in cards[0]
+    async with session_factory() as s:
+        lead = (await s.scalars(select(Lead))).one()
+        assert lead.data["Номер заказа в Stripe"] == "bcnbot-lead-1"
+    assert not fake_session.sent(SendInvoice)
+
+
+async def test_invoice_has_priority_over_link(make_dlg, paid_env, fake_session, settings):
+    settings.nota_simple.payment_link_url = "https://buy.stripe.com/test_abc"
+    d, _ = make_dlg(uid=84)
+    await _checked(d)
+    await d.cb("k:nota")
+    assert fake_session.sent(SendInvoice)
+
+
+async def test_without_token_falls_back_to_lead_form(make_dlg, fake_session, settings):
+    settings.nota_simple.payment_link_url = ""
     d, _ = make_dlg(uid=82)
     await _checked(d)
     assert "согласие" in await d.cb("k:nota")

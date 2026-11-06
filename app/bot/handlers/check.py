@@ -10,7 +10,7 @@ import re
 from typing import Any
 
 import structlog
-from aiogram import F, Router
+from aiogram import Bot, F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -29,12 +29,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.bot import keyboards as kb
 from app.bot.handlers.calc import start_calc
 from app.bot.handlers.contact import start_lead_flow
-from app.bot.handlers.payments import send_nota_invoice
+from app.bot.handlers.payments import payment_link, send_nota_invoice
 from app.bot.handlers.start import send_menu
+from app.bot.notify import send_lead_card
 from app.config import CatastroSettings, Env, Regulation, Settings, get_regulation
 from app.core import cadastre as cd
 from app.core import repo
-from app.core.models import Event, User
+from app.core.models import Event, User, utcnow
 from app.core.money import format_pct
 from app.i18n import t
 from app.integrations.catastro import (
@@ -55,6 +56,7 @@ CB_CONSULT = P + "consult"
 CB_CALC = P + "calc"
 CB_DETAILS = P + "details"
 CB_SKIP_AREA = P + "area:skip"
+CB_ORDER = P + "order"
 MAX_STREETS = 10
 CANCEL_TEXTS = {t(x, "common.cancel") for x in ("ru", "en")}
 
@@ -741,12 +743,67 @@ async def cb_lead(
         if isinstance(cq.message, Message):
             await send_nota_invoice(cq.message, p, lang, settings, env)
         return
+    if (lead_type == "nota_simple" and settings.nota_simple.payment_link_url
+            and settings.nota_simple.price_eur):  # fmt: skip
+        if isinstance(cq.message, Message):
+            address = p.address.split(" 0")[0] if p.address else p.rc
+            await cq.message.answer(
+                t(lang, "pay.offer_link", price=settings.nota_simple.price_eur,
+                  address=html.escape(address), privacy_url=settings.legal.privacy_policy_url),
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    [_btn(t(lang, "pay.order_button", price=settings.nota_simple.price_eur),
+                          CB_ORDER)],
+                    [_btn(t(lang, "common.cancel"), kb.CB.CANCEL)],
+                ]),
+                disable_web_page_preview=True,
+            )  # fmt: skip
+        return
     admin_lang = settings.admin.language
     data = lead_data(p, admin_lang, check.get("listing_area"), check.get("flags"))
     if lead_type == "nota_simple" and settings.nota_simple.price_eur:
         data[t(admin_lang, "check.lead.price")] = f"{settings.nota_simple.price_eur} €"
     if isinstance(cq.message, Message):
         await start_lead_flow(cq.message, state, lang, settings, lead_type, data)
+
+
+@router.callback_query(F.data == CB_ORDER)
+async def cb_order(
+    cq: CallbackQuery,
+    state: FSMContext,
+    lang: str,
+    settings: Settings,
+    env: Env,
+    session: AsyncSession,
+    user: User,
+    bot: Bot,
+) -> None:
+    """Payment Link mode: create the order (lead «awaiting payment»), then give the pay button."""
+    check = await last_check(state, session, user)
+    p = await _last_property(state, session, user)
+    if p is None or not settings.nota_simple.payment_link_url:
+        await cq.answer(t(lang, "check.err.expired"), show_alert=True)
+        return
+    await cq.answer()
+    admin_lang = settings.admin.language
+    price = settings.nota_simple.price_eur
+    data = lead_data(p, admin_lang, check.get("listing_area"), check.get("flags"))
+    data[t(admin_lang, "check.lead.price")] = f"{price} €"
+    data[t(admin_lang, "pay.lead.paid")] = t(admin_lang, "pay.awaiting")
+    tg = cq.from_user
+    lead = await repo.create_lead(session, user, "nota_simple", name=tg.full_name, phone=None,
+                                  data=data, consent_at=utcnow())  # fmt: skip
+    lead.data = {**data, t(admin_lang, "pay.lead.reference"): f"bcnbot-lead-{lead.id}"}
+    await repo.log_event(session, user.id, "order:nota", {"lead_id": lead.id},
+                         source=lead.source)  # fmt: skip
+    lead.admin_message_id = await send_lead_card(bot, env.admin_chat_id, lead, user, admin_lang)
+    if isinstance(cq.message, Message):
+        await cq.message.edit_reply_markup(reply_markup=None)
+        await cq.message.answer(
+            t(lang, "pay.link_ready", lead_id=lead.id, price=price),
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(
+                text=t(lang, "pay.pay_button", price=price),
+                url=payment_link(settings, lead.id))]]),
+        )  # fmt: skip
 
 
 @router.callback_query(F.data == CB_CALC)

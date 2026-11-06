@@ -58,6 +58,15 @@ async def send_nota_invoice(
     )
 
 
+def payment_link(settings: Settings, lead_id: int) -> str:
+    """Stripe Payment Link + our order number (shown in the Stripe payment as Client reference)."""
+    from urllib.parse import urlencode
+
+    url = settings.nota_simple.payment_link_url
+    sep = "&" if "?" in url else "?"
+    return f"{url}{sep}{urlencode({'client_reference_id': f'bcnbot-lead-{lead_id}'})}"
+
+
 @router.pre_checkout_query()
 async def pre_checkout(query: PreCheckoutQuery, lang: str, settings: Settings) -> None:
     ok = (
