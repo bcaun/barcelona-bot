@@ -86,5 +86,7 @@ class QuizSession(Base):
     score: Mapped[int] = mapped_column(Integer, default=0)
     won: Mapped[bool] = mapped_column(default=False)
     subscribed_at_finish: Mapped[bool] = mapped_column(default=False)
+    # «Ivan P.» — shown in the leaderboard (first name + last-name initial, no username)
+    display_name: Mapped[str | None] = mapped_column(String(40))
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)

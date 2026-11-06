@@ -2,7 +2,7 @@
 
 Revision ID: 0003
 Revises: 0002
-Create Date: 2026-11-06 09:59:36.770205
+Create Date: 2026-11-06 10:00:39.729295
 """
 from alembic import op
 import sqlalchemy as sa
@@ -24,6 +24,7 @@ def upgrade() -> None:
     sa.Column('score', sa.Integer(), nullable=False),
     sa.Column('won', sa.Boolean(), nullable=False),
     sa.Column('subscribed_at_finish', sa.Boolean(), nullable=False),
+    sa.Column('display_name', sa.String(length=40), nullable=True),
     sa.Column('started_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('finished_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_quiz_sessions_user_id_users'), ondelete='CASCADE'),
