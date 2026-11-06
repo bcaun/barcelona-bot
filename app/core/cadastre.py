@@ -314,3 +314,85 @@ def parse_streets(body: dict[str, Any]) -> list[Street]:
         if d.get("nv"):
             out.append(Street(str(d.get("cv", "")), str(d.get("tv", "")), str(d["nv"])))
     return out
+
+
+# ---------------------------------------------------------------- «traffic light» checklist
+
+
+class Level:
+    OK = "ok"
+    WARN = "warn"
+    BAD = "bad"
+    INFO = "info"
+
+
+@dataclass(frozen=True)
+class CheckItem:
+    level: str  # Level.*
+    key: str  # i18n key suffix: check.v.<key>
+    params: dict[str, Any]
+
+
+@dataclass(frozen=True)
+class CheckRules:
+    residential_uses: frozenset[str]
+    area_warn_pct: Decimal  # listing vs cadastre, e.g. 0.10
+    ite_age_years: int
+    stressed: frozenset[str]
+    tourist_ban: frozenset[str]
+
+
+def checklist(
+    p: Property, listing_area: int | None, rules: CheckRules, today: date | None = None
+) -> list[CheckItem]:
+    """What a buyer should know about the property, worst first within the fixed order."""
+    items: list[CheckItem] = []
+    use = p.use.strip()
+    if use:
+        if use.lower() in rules.residential_uses:
+            items.append(CheckItem(Level.OK, "use_ok", {}))
+        else:
+            items.append(CheckItem(Level.BAD, "use_not_residential", {"use": use}))
+
+    if p.area_m2:
+        if listing_area:
+            diff = (Decimal(listing_area) - p.area_m2) / p.area_m2
+            params = {"listing": listing_area, "cadastre": p.area_m2,
+                      "diff": int((diff * 100).to_integral_value())}  # fmt: skip
+            if diff > rules.area_warn_pct:
+                items.append(CheckItem(Level.WARN, "area_bigger", params))
+            elif diff < -rules.area_warn_pct:
+                items.append(CheckItem(Level.INFO, "area_smaller", params))
+            else:
+                items.append(CheckItem(Level.OK, "area_match", params))
+        else:
+            items.append(CheckItem(Level.INFO, "area_cadastre", {"cadastre": p.area_m2}))
+
+    if p.year_built:
+        age = (today or date.today()).year - p.year_built
+        key = "ite_needed" if age >= rules.ite_age_years else "ite_not_yet"
+        level = Level.WARN if age >= rules.ite_age_years else Level.OK
+        items.append(CheckItem(level, key, {"year": p.year_built, "age": rules.ite_age_years}))
+
+    m = p.municipality.strip().lower()
+    if m in rules.tourist_ban:
+        items.append(CheckItem(Level.BAD, "tourist_banned", {}))
+    if m in rules.stressed:
+        items.append(CheckItem(Level.WARN, "rent_capped", {}))
+    return items
+
+
+def flag_summary(items: list[CheckItem]) -> list[str]:
+    """Compact keys of non-OK items, for analytics and the admin card."""
+    return [i.key for i in items if i.level in (Level.WARN, Level.BAD)]
+
+
+def parse_area(text: str) -> int | None:
+    """'92', '92 m2', '92 м²', '92,5' -> 92 (rounded); None if not an area."""
+    m = re.match(
+        r"\s*(\d{1,5})(?:[.,](\d))?\s*(?:m2|m²|м2|м²|кв\.?\s*м|sqm)?\s*$", (text or "").lower()
+    )
+    if not m:
+        return None
+    value = int(m.group(1)) + (1 if m.group(2) and int(m.group(2)) >= 5 else 0)
+    return value if 5 <= value <= 20000 else None

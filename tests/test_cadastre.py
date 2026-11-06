@@ -120,3 +120,85 @@ def test_filter_units():
     assert filter_units(labels, "01") == [0, 1]
     assert filter_units(labels, "3 1 2") == [2]
     assert filter_units(labels, "") == []
+
+
+# ---------------------------------------------------------------- checklist
+from app.core.cadastre import CheckRules, Level, checklist, flag_summary, parse_area  # noqa: E402
+
+RULES = CheckRules(
+    residential_uses=frozenset({"residencial"}),
+    area_warn_pct=Decimal("0.10"),
+    ite_age_years=45,
+    stressed=frozenset({"barcelona"}),
+    tourist_ban=frozenset({"barcelona"}),
+)
+
+
+def _prop(**kw):
+    base = dict(
+        rc="X",
+        address="A",
+        municipality="BARCELONA",
+        province="BARCELONA",
+        use="Residencial",
+        area_m2=92,
+        year_built=2013,
+        share_pct=None,
+        kind="UR",
+        map_url=None,
+    )
+    base.update(kw)
+    return Property(**base)
+
+
+def test_checklist_residential_new_building_area_bigger():
+    items = checklist(_prop(), 105, RULES, today=date(2026, 11, 6))
+    got = [(i.level, i.key) for i in items]
+    assert got == [
+        (Level.OK, "use_ok"),
+        (Level.WARN, "area_bigger"),
+        (Level.OK, "ite_not_yet"),
+        (Level.BAD, "tourist_banned"),
+        (Level.WARN, "rent_capped"),
+    ]
+    assert items[1].params == {"listing": 105, "cadastre": 92, "diff": 14}
+    assert flag_summary(items) == ["area_bigger", "tourist_banned", "rent_capped"]
+
+
+def test_checklist_commercial_old_outside_barcelona():
+    items = checklist(
+        _prop(use="Comercial", year_built=1969, municipality="GIRONA"),
+        None,
+        RULES,
+        today=date(2026, 11, 6),
+    )
+    assert [(i.level, i.key) for i in items] == [
+        (Level.BAD, "use_not_residential"),
+        (Level.INFO, "area_cadastre"),
+        (Level.WARN, "ite_needed"),
+    ]
+
+
+@pytest.mark.parametrize(
+    ("listing", "key"),
+    [(100, "area_match"), (80, "area_smaller"), (101, "area_match"), (102, "area_bigger")],
+)
+def test_checklist_area_thresholds(listing, key):
+    items = checklist(_prop(), listing, RULES)
+    assert items[1].key == key
+
+
+@pytest.mark.parametrize(
+    ("text", "v"),
+    [
+        ("92", 92),
+        ("92 m2", 92),
+        ("92 м²", 92),
+        ("92,5", 93),
+        ("abc", None),
+        ("3", None),
+        ("105 кв.м", 105),
+    ],
+)
+def test_parse_area(text, v):
+    assert parse_area(text) == v
